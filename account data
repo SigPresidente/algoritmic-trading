@@ -1,1 +1,0 @@
-#File di dati dell'account da escludere da git
