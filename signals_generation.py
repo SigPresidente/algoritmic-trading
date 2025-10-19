@@ -2,7 +2,7 @@
 
 import pandas as pd
 import yfinance as yf
-import ta  # Installa ta-lib se non presente, o usa rolling mean
+import ta  # ta-lib da verificare
 
 # Scarica dati
 data = yf.download('^NDX', start='2018-01-01', end='2025-10-12')

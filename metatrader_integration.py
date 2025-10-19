@@ -7,21 +7,21 @@ if not mt5.initialize():
     print("Inizializzazione fallita")
     mt5.shutdown()
 
-# Login account demo (sostituisci con tuoi dettagli)
-account = 123456  # Tuo account demo
-password = 'tuapassword'
-server = 'Pepperstone-Demo'  # Broker server
+# Login account demo
+account = xxxx  
+password = 'xxxx'
+server = 'xxxx'  # Broker
 mt5.login(account, password, server)
 
-# Invia ordine basato su segnale (es. da Python analisi)
-symbol = 'NDX'  # NASDAQ-100 simbolo su MT5
-signal = 1  # Da tua analisi (1=buy, -1=sell)
+# Invia ordine basato su segnale (da script)
+symbol = 'NDX'  # nome simbolo su mt5
+signal = 1  # Segnale arriva da script (1=buy, -1=sell)
 
 if signal == 1:
     request = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": symbol,
-        "volume": 0.1,  # Lotto minimo
+        "volume": 0.1,  # Lotto da decidere
         "type": mt5.ORDER_TYPE_BUY,
         "price": mt5.symbol_info_tick(symbol).ask,
         "deviation": 20,
