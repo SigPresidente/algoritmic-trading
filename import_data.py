@@ -7,8 +7,9 @@ from datetime import datetime, timedelta
 import os
 
 #Files
-from account_data import *
+from account_data import * #RESTRICT TO NEEDED
 from signals_generation import *
+from metatrader_integration import *
 
 #Config: account data and symbols
 api_key = ALPHA_API_KEY

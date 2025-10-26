@@ -7,9 +7,10 @@
 
 #Libraries
 import pandas as pd
-import ta #ta-lib for MACD and RSI
+import talib as ta
 
 #Files
+from account_data import * #RESTRICT TO NEEDED
 from import_data import *
 
 #Config: 
