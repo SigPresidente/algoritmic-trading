@@ -1,10 +1,11 @@
 #IMPORTS SIGNALS FROM CSV AND SENDS ORDERS TO MT5
 
 #Libraries
-import PythonMetaTrader5 as mt5
+import MetaTrader5 as mt5
 import pandas as pd
 
 #Files
+from account_data import *
 from import_data import *
 
 #Config:

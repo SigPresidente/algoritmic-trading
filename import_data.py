@@ -2,21 +2,34 @@
 
 #Libraries
 import pandas as pd
-from alpha_vantage.timeseries import TimeSeries
 from datetime import datetime, timedelta
 import os
 
 #Files
 from account_data import * #RESTRICT TO NEEDED
 from signals_generation import *
-from metatrader_integration import *
 
 #Config: account data and symbols
 api_key = ALPHA_API_KEY
-symbols = ["^NDX", "^FTMIB"] #Nasdaq-100 (USA) and FTSE MIB (IT) (or DAX30 eventually)
-start_date = "2018-01-01" #Select a starting date
+symbols = ["^NDX", "^FTMIB", "^GDAXI"] #Nasdaq-100 (USA) and FTSE MIB (IT) (or DAX30 eventually)
+start_date = "2018-01-01"
 end_date = datetime.now().strftime("%Y-%m-%d")
 output_dir = "." #Inside project directory
+
+#Try importing both data sources
+try:
+    from alpha_vantage.timeseries import TimeSeries
+    _HAS_ALPHA_VANTAGE = True
+except ImportError:
+    _HAS_ALPHA_VANTAGE = False
+    print("Alpha Vantage not installed. Install with: pip install alpha-vantage")
+
+try:
+    import yfinance as yf
+    _HAS_YFINANCE = True
+except ImportError:
+    _HAS_YFINANCE = False
+    print("yfinance not installed. Install with: pip install yfinance")
 
 def fetch_and_save_data(symbol) :
     file_path = f"{output_dir}/{symbol.lower().replace("^", "")}_historical.csv" #Creates a .csv file
