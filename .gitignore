@@ -1,7 +1,5 @@
-#File delle credenziali
-/account_data.py
+#File da ignorare
 /uml_diagram
-/MauroLSTM.py
-/MauroPredizione_LSTM.py
+/*MauroLSTM.py
+/*MauroPredizione_LSTM.py
 /__pycache__
-/venv

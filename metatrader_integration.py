@@ -16,6 +16,10 @@ account = MT5_ACCOUNT
 password = MT5_PASSWORD
 server = MT5_SERVER
 
+#Calculate SL/TP percentages: (Simple Version)
+sl_percent = 0.02  # 2% below/above entry for SL
+tp_percent = 0.04  # 4% above/below entry for TP (1:2 risk-reward)
+
 #Fetch latest signal:
 def get_latest_signal(csv_path='ndx_with_macd_rsi_dmi_signals.csv'):
     df = pd.read_csv(csv_path, index_col='date', parse_dates=True)
@@ -34,7 +38,7 @@ def send_order_to_mt5(signal):
         mt5.shutdown()
         return
     
-    #Get current info from symbol
+    #Get current info from MT5 symbol:
     tick = mt5.symbol_info_tick(symbol)
     if tick is None:
         print(f"Invalid symbol: {symbol}")
@@ -45,10 +49,14 @@ def send_order_to_mt5(signal):
     if signal == 1:  # Buy
         order_type = mt5.ORDER_TYPE_BUY
         price = tick.ask  # Buy at ask price
+        sl = price * (1 - sl_percent)  #SL 2% below entry
+        tp = price * (1 + tp_percent)  #TP 4% above entry
         comment = "Python Buy Signal"
     elif signal == -1:  # Sell
         order_type = mt5.ORDER_TYPE_SELL
         price = tick.bid  # Sell at bid price
+        sl = price * (1 + sl_percent)  #SL 2% above entry
+        tp = price * (1 - tp_percent)  #TP 4% below entry
         comment = "Python Sell Signal"
     else:  # Hold
         print("No signal (Hold). No order sent.")
@@ -62,7 +70,7 @@ def send_order_to_mt5(signal):
         "type": order_type,
         "price": price,
         "deviation": deviation,
-        "magic": 12345,  #CHECK MAGIC NUMBER
+        "magic": MAGIC_NUMBER,
         "comment": comment,
         "type_time": mt5.ORDER_TIME_GTC,  #Good till cancel
         "type_filling": mt5.ORDER_FILLING_IOC,  #Immediate or cancel
@@ -78,5 +86,5 @@ def send_order_to_mt5(signal):
     mt5.shutdown()
 
 # Example usage: Get signal and send
-latest_signal = get_latest_signal()  # From your generator CSV
+latest_signal = get_latest_signal()  #From .CSV
 send_order_to_mt5(latest_signal)

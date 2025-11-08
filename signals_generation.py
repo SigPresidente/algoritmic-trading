@@ -85,6 +85,6 @@ df = df.dropna()
 print(df[['close', 'SMA_short', 'SMA_long', 'MACD', 'MACD_Signal', 'RSI', 'Plus_DI', 'Minus_DI', 'Signal']].tail(10))
 
 # Save updated CSV with signals
-output_path = 'ndx_with_macd_rsi_dmi_signals.csv'
+output_path = 'ndx_signals.csv'
 df.to_csv(output_path)
 print(f"Signals saved to {output_path}")
