@@ -6,5 +6,5 @@ MT5_PASSWORD = "TesiLaurea25!"
 MT5_SERVER = "FirstPrudentialMarkets-Demo"
 MAGIC_NUMBER = "09031994"
 
-#Dati Alpha Vantage
-ALPHA_API_KEY = "D5OGLEFZ7QP9F1OG"
+#Dati simboli
+SYMBOLS = ["^NDX", "^GDAXI"]
