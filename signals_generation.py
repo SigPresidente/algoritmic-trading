@@ -13,16 +13,16 @@ import talib as ta
 from account_data import *
 
 #Config:
-symbol = SYMBOLS 
-csv_path = f'{symbol.lower().replace("^", "")}_historical.csv'
+symbols = SYMBOLS
 short_ma = 50  # Short-term MA
 long_ma = 200  # Long-term MA
 rsi_period = 14  # RSI period
-rsi_overbought = 60  # RSI sell threshold
-rsi_oversold = 40    # RSI buy threshold
+rsi_overbought = 50  # RSI sell threshold
+rsi_oversold = 50    # RSI buy threshold
 
 #Load data:
-for sym in symbol:
+for sym in symbols:
+    csv_path = f'{sym.lower().replace("^", "")}_historical.csv'
     df = pd.read_csv(csv_path, index_col='date', parse_dates=["date"])
     df = df.sort_index()  # Ensure sorted by date
 
@@ -31,8 +31,7 @@ for sym in symbol:
     df['SMA_long'] = df['close'].rolling(window=long_ma).mean()
 
     #Calculate RSI (Relative Strength Index):
-    rsi = ta.momentum.RSI(df['close'], window=rsi_period)
-    df['RSI'] = rsi
+    df['RSI'] = ta.RSI(df['close'].values, timeperiod=rsi_period)
 
     # Shift previous values for crossover detection
     df['Prev_SMA_short'] = df['SMA_short'].shift(1)
@@ -63,6 +62,6 @@ for sym in symbol:
     print(df[['close', 'SMA_short', 'SMA_long', 'RSI', 'Signal']].tail(10))
 
     # Save updated CSV with signals
-    output_path = f"{symbol.lower().replace('^', '')}_signals.csv"
-    df.to_csv(output_path)
+    output_path = f"{sym.lower().replace('^', '')}_signals.csv"
+    df.to_csv(output_path, index_label="date")
     print(f"Signals saved to {output_path}")
