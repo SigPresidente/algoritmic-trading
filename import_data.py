@@ -58,8 +58,11 @@ def fetch_and_save_yfinance_data(symbol):
     return df
 
 #Execute functions for both sources and for each symbol
-for sym in symbols:
-    data_yfinance= fetch_and_save_yfinance_data(sym)
-    print("FROM YFINANCE:", data_yfinance.tail(5)) #Check if function ran correctly
-    
+def main():
+    for sym in symbols:
+        data_yfinance= fetch_and_save_yfinance_data(sym)
+        print("FROM YFINANCE:", data_yfinance.tail(5)) #Check if function ran correctly
+
+if __name__ == "__main__":
+    main()
     

@@ -1,12 +1,16 @@
-#BACKTESTING TOOL FOR EVERY SYMBOL, CHECKS STRATEGY AND GENERATES P/L RESULTS
+# BACKTESTING TOOL FOR EVERY SYMBOL, CHECKS STRATEGY AND GENERATES P/L RESULTS
 
 #Libraries
 import pandas as pd
+
+#Files
 from account_data import SYMBOLS
 
 #Config
 initial_cash = 5000.0
 commission = 0.005  #0.5 % (realistic for robo-advisors)
+sl_percent = 0.02  # 2% SL fixed
+tp_percent = 0.04  # 4% TP fixed (1:2 ratio)
 output_dir = "."
 
 def backtest_symbol(symbol):
@@ -17,10 +21,11 @@ def backtest_symbol(symbol):
     df = df.sort_index()
     
     #Simulation variables
-    position = 0 #0 = no position, 1 = long
+    position = 0 #0 = flat, >0 = long shares, <0 = short shares
     cash = initial_cash
-    shares = 0.0
     entry_price = 0.0
+    sl_price = 0.0
+    tp_price = 0.0
     
     equity = []
     trades = []
@@ -28,26 +33,58 @@ def backtest_symbol(symbol):
     for date, row in df.iterrows():
         price = row['close']
         signal = row['Signal']
+        high = row['high']  # Use for SL/TP hits (realistic intraday check)
+        low = row['low']
         
-        # --- EXECUTE SIGNALS ---
-        if signal == 1 and position == 0:           # BUY
+        # --- CHECK SL/TP FIRST (if in position) ---
+        if position > 0:  # Long
+            if low <= sl_price:  # Hit SL
+                pnl = position * (sl_price - entry_price) - abs(position) * sl_price * commission
+                cash = position * sl_price * (1 - commission)
+                trades.append({'date': date, 'action': 'sell (SL)', 'price': sl_price, 'pnl': pnl})
+                position = 0
+            elif high >= tp_price:  # Hit TP
+                pnl = position * (tp_price - entry_price) - abs(position) * tp_price * commission
+                cash = position * tp_price * (1 - commission)
+                trades.append({'date': date, 'action': 'sell (TP)', 'price': tp_price, 'pnl': pnl})
+                position = 0
+        
+        elif position < 0:  # Short
+            if high >= sl_price:  # Hit SL (price up)
+                pnl = abs(position) * (entry_price - sl_price) - abs(position) * sl_price * commission
+                cash = abs(position) * sl_price * (1 - commission)
+                trades.append({'date': date, 'action': 'buy (SL)', 'price': sl_price, 'pnl': pnl})
+                position = 0
+            elif low <= tp_price:  # Hit TP (price down)
+                pnl = abs(position) * (entry_price - tp_price) - abs(position) * tp_price * commission
+                cash = abs(position) * tp_price * (1 - commission)
+                trades.append({'date': date, 'action': 'buy (TP)', 'price': tp_price, 'pnl': pnl})
+                position = 0
+        
+        # --- EXECUTE SIGNALS (only if flat) ---
+        if signal == 1 and position == 0:           # BUY (open long)
             shares = cash / price * (1 - commission)
-            cash = 0.0
-            position = 1
+            position = shares
             entry_price = price
-            trades.append({'date': date, 'action': 'buy', 'price': price, 'shares': shares})
+            sl_price = price * (1 - sl_percent)
+            tp_price = price * (1 + tp_percent)
+            trades.append({'date': date, 'action': 'buy', 'price': price, 'pnl': 0})
+            cash = 0.0
         
-        elif signal == -1 and position == 1:         # SELL
-            proceeds = shares * price * (1 - commission)
-            pnl = proceeds - (shares * entry_price)
-            cash = proceeds
-            trades.append({'date': date, 'action': 'sell', 'price': price, 'pnl': pnl})
-            shares = 0.0
-            position = 0
+        elif signal == -1 and position == 0:         # SELL (open short)
+            shares = cash / price * (1 - commission)
+            position = -shares  # Negative for short
+            entry_price = price
+            sl_price = price * (1 + sl_percent)  # SL above entry
+            tp_price = price * (1 - tp_percent)  # TP below entry
+            trades.append({'date': date, 'action': 'sell', 'price': price, 'pnl': 0})
+            cash = 0.0  # Cash "locked" in short (simplified)
         
         # --- DAILY EQUITY ---
-        if position == 1:
-            current_value = shares * price
+        if position > 0:  # Long value
+            current_value = cash + position * price
+        elif position < 0:  # Short value (profit if price down)
+            current_value = cash + abs(position) * (entry_price - price)
         else:
             current_value = cash
         
@@ -85,5 +122,9 @@ def backtest_symbol(symbol):
     print(f"Win rate        : {win_rate:.1%}\n")
 
 #Run for all symbols
-for sym in SYMBOLS:
-    backtest_symbol(sym)
+def main():
+    for sym in SYMBOLS:
+        backtest_symbol(sym)
+
+if  __name__ == "__main__":
+    main()

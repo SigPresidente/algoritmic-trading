@@ -9,11 +9,11 @@ def run(cmd):
     print("> " + " ".join(cmd))
     subprocess.check_call(cmd)
 
-# 1. Create venv
+#1) Create virtual environment
 print("Creating virtual environment...")
 run([sys.executable, "-m", "venv", VENV_DIR])
 
-# 2. Select correct activation script
+#2)Select correct activation script for specific OS
 if platform.system() == "Windows":
     activate = os.path.join(VENV_DIR, "Scripts", "activate")
 else:
@@ -21,7 +21,7 @@ else:
 
 print(f"Activate it manually with: source {activate}")
 
-# 3. Use venv's pip
+#3)Use venv's pip to install dependencies
 pip_path = os.path.join(VENV_DIR, "Scripts" if platform.system() == "Windows" else "bin", "pip")
 
 print("Installing requirements...")
