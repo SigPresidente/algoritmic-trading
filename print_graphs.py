@@ -1,4 +1,4 @@
-# PRINTS GRAPHS FOR STUDY PURPOSES AND SAVES THEM AS PNG FOR THESIS
+#PRINTS GRAPHS FOR STUDY PURPOSES AND SAVES THEM AS PNG FOR THESIS
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,19 +7,19 @@ from account_data import SYMBOLS
 # Config
 initial_cash = 5000.0  # Match your backtest initial cash
 robo_annual_rate = 0.05  # 5% annual for robo simulation
-output_dir = "."  # Where CSVs are; save PNGs here too
+output_dir = "."
 
-# Helper to annualized volatility
+#Helper to annualized volatility
 def annualized_vol(returns, trading_days=252):
     return returns.std() * (trading_days ** 0.5) * 100
 
-# Loop over each symbol and generate/save all graphs
+#Loop over each symbol and generate/save all graphs
 def main():
     for sym in SYMBOLS:
         equity_path = f"{output_dir}/equity_curve_{sym.lower().replace('^', '')}.csv"
         trades_path = f"{output_dir}/backtest_results_{sym.lower().replace('^', '')}.csv"
         
-        # Load data (skip if files missing)
+        #Load data (skips if files are missing)
         try:
             df = pd.read_csv(equity_path, parse_dates=['date'], index_col='date')
             trades_df = pd.read_csv(trades_path, parse_dates=['date'])
@@ -27,7 +27,7 @@ def main():
             print(f"Skipping {sym}: CSVs not found. Run backtesting.py first.")
             continue
         
-        # 1. Equity Curve vs. Benchmark and Robo-Simulated Returns
+        #1) Equity Curve vs. Benchmark and Robo-Simulated Returns
         df['robo_equity'] = initial_cash * (1 + robo_annual_rate / 252).cumprod()[:len(df)]
         plt.figure(figsize=(12, 6))
         plt.plot(df.index, df['equity'], label='Algo Equity')
@@ -41,7 +41,7 @@ def main():
         plt.savefig(f"{output_dir}/equity_comparison_{sym.lower().replace('^', '')}.png")
         plt.close()  # Close to free memory
 
-        # 2. Cumulative Returns
+        #2) Cumulative Returns
         df['algo_returns'] = (df['equity'] / df['equity'].iloc[0] - 1) * 100
         df['benchmark_returns'] = (df['close'] / df['close'].iloc[0] - 1) * 100
         plt.figure(figsize=(12, 6))
@@ -55,7 +55,7 @@ def main():
         plt.savefig(f"{output_dir}/cumulative_returns_{sym.lower().replace('^', '')}.png")
         plt.close()
 
-        # 3. Drawdown Curve
+        #3) Drawdown Curve
         df['peak'] = df['equity'].cummax()
         df['drawdown'] = (df['equity'] - df['peak']) / df['peak'] * 100
         plt.figure(figsize=(12, 6))
@@ -69,7 +69,7 @@ def main():
         plt.savefig(f"{output_dir}/drawdown_{sym.lower().replace('^', '')}.png")
         plt.close()
 
-        # 4. Trade P/L Distribution (Histogram)
+        #4) Trade P/L Distribution (Histogram)
         if 'pnl' in trades_df.columns and not trades_df.empty:
             pnl = trades_df[trades_df['action'] == 'sell']['pnl']  # P/L from sells
             plt.figure(figsize=(10, 6))
@@ -83,7 +83,7 @@ def main():
         else:
             print(f"No trades for {sym}; skipping P/L histogram.")
 
-        # 5. Performance Metrics Table (Save as CSV; optional plot as table image)
+        #5) Performance Metrics Table (Save as CSV; optional plot as table image)
         df['daily_ret'] = df['equity'].pct_change().dropna()
         max_dd = df['drawdown'].min()
         sharpe = df['daily_ret'].mean() / df['daily_ret'].std() * (252 ** 0.5) if df['daily_ret'].std() != 0 else 0
@@ -101,7 +101,7 @@ def main():
         pd.Series(metrics).to_csv(f"{output_dir}/performance_metrics_{sym.lower().replace('^', '')}.csv")
         print(f"Metrics saved for {sym}")
 
-        # 6. Volatility Comparison (Bar Plot)
+        #6) Volatility Comparison (Bar Plot)
         algo_vol = annualized_vol(df['daily_ret'])
         bench_daily_ret = df['close'].pct_change().dropna()
         bench_vol = annualized_vol(bench_daily_ret)

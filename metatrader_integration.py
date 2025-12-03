@@ -21,7 +21,7 @@ sl_percent = 0.02  # 2% below/above entry for SL
 tp_percent = 0.04  # 4% above/below entry for TP (1:2 risk-reward)
 
 #Fetch latest signal:
-def get_latest_signal(csv_path='ndx_with_macd_rsi_dmi_signals.csv'):
+def get_latest_signal(csv_path='ndx_signals.csv'):
     df = pd.read_csv(csv_path, index_col='date', parse_dates=True)
     latest_signal = df['Signal'].iloc[-1]  #Last row
     return latest_signal

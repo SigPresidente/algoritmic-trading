@@ -9,8 +9,9 @@ from account_data import SYMBOLS
 #Config
 initial_cash = 5000.0
 commission = 0.005  #0.5 % (realistic for robo-advisors)
-sl_percent = 0.02  # 2% SL fixed
-tp_percent = 0.04  # 4% TP fixed (1:2 ratio)
+sl_percent = 0.02 # 2% SL fixed
+#tp_percent = 0.04  # 4% TP fixed (1:2 ratio)
+trail_percent = 0.02
 output_dir = "."
 
 def backtest_symbol(symbol):
@@ -26,6 +27,7 @@ def backtest_symbol(symbol):
     entry_price = 0.0
     sl_price = 0.0
     tp_price = 0.0
+    max_price = 0.0
     
     equity = []
     trades = []
@@ -33,52 +35,81 @@ def backtest_symbol(symbol):
     for date, row in df.iterrows():
         price = row['close']
         signal = row['Signal']
-        high = row['high']  # Use for SL/TP hits (realistic intraday check)
+        high = row['high']
         low = row['low']
         
-        # --- CHECK SL/TP FIRST (if in position) ---
-        if position > 0:  # Long
-            if low <= sl_price:  # Hit SL
+        #Update trailing SL if in long
+        if position > 0:
+            max_price = max(max_price, high)  # Update max since entry
+            new_sl = max_price * (1 - trail_percent)
+            sl_price = max(sl_price, new_sl)  # Ratchet up
+
+        # Check SL/TP first (adapted for no fixed TP)
+        if position > 0:
+            if low <= sl_price:  # Hit trailing SL
                 pnl = position * (sl_price - entry_price) - abs(position) * sl_price * commission
                 cash = position * sl_price * (1 - commission)
                 trades.append({'date': date, 'action': 'sell (SL)', 'price': sl_price, 'pnl': pnl})
                 position = 0
-            elif high >= tp_price:  # Hit TP
-                pnl = position * (tp_price - entry_price) - abs(position) * tp_price * commission
-                cash = position * tp_price * (1 - commission)
-                trades.append({'date': date, 'action': 'sell (TP)', 'price': tp_price, 'pnl': pnl})
-                position = 0
-        
-        elif position < 0:  # Short
-            if high >= sl_price:  # Hit SL (price up)
-                pnl = abs(position) * (entry_price - sl_price) - abs(position) * sl_price * commission
-                cash = abs(position) * sl_price * (1 - commission)
-                trades.append({'date': date, 'action': 'buy (SL)', 'price': sl_price, 'pnl': pnl})
-                position = 0
-            elif low <= tp_price:  # Hit TP (price down)
-                pnl = abs(position) * (entry_price - tp_price) - abs(position) * tp_price * commission
-                cash = abs(position) * tp_price * (1 - commission)
-                trades.append({'date': date, 'action': 'buy (TP)', 'price': tp_price, 'pnl': pnl})
-                position = 0
-        
-        # --- EXECUTE SIGNALS (only if flat) ---
-        if signal == 1 and position == 0:           # BUY (open long)
+                max_price = 0.0
+
+#        # --- CHECK SL/TP FIRST (if in position) ---
+#        if position > 0:  # Long
+#            if low <= sl_price:  # Hit SL
+#                pnl = position * (sl_price - entry_price) - abs(position) * sl_price * commission
+#                cash = position * sl_price * (1 - commission)
+#                trades.append({'date': date, 'action': 'sell (SL)', 'price': sl_price, 'pnl': pnl})
+#                position = 0
+#            elif high >= tp_price:  # Hit TP
+#                pnl = position * (tp_price - entry_price) - abs(position) * tp_price * commission
+#                cash = position * tp_price * (1 - commission)
+#                trades.append({'date': date, 'action': 'sell (TP)', 'price': tp_price, 'pnl': pnl})
+#                position = 0
+#        
+#        elif position < 0:  # Short
+#            if high >= sl_price:  # Hit SL (price up)
+#                pnl = abs(position) * (entry_price - sl_price) - abs(position) * sl_price * commission
+#                cash = abs(position) * sl_price * (1 - commission)
+#                trades.append({'date': date, 'action': 'buy (SL)', 'price': sl_price, 'pnl': pnl})
+#                position = 0
+#            elif low <= tp_price:  # Hit TP (price down)
+#                pnl = abs(position) * (entry_price - tp_price) - abs(position) * tp_price * commission
+#                cash = abs(position) * tp_price * (1 - commission)
+#                trades.append({'date': date, 'action': 'buy (TP)', 'price': tp_price, 'pnl': pnl})
+#                position = 0
+
+#CHANGED FOR TRAILING STOP LOSS        
+#        # --- EXECUTE SIGNALS (only if flat) ---
+#        if signal == 1 and position == 0:           # BUY (open long)
+#            shares = cash / price * (1 - commission)
+#            position = shares
+#           entry_price = price
+#            sl_price = price * (1 - sl_percent)
+#            tp_price = price * (1 + tp_percent)
+#            trades.append({'date': date, 'action': 'buy', 'price': price, 'pnl': 0})
+#            cash = 0.0
+#        
+#        elif signal == -1 and position == 0:         # SELL (open short)
+#            shares = cash / price * (1 - commission)
+#            position = -shares  # Negative for short
+#            entry_price = price
+#            sl_price = price * (1 + sl_percent)  # SL above entry
+#            tp_price = price * (1 - tp_percent)  # TP below entry
+#            trades.append({'date': date, 'action': 'sell', 'price': price, 'pnl': 0})
+#            cash = 0.0  # Cash "locked" in short (simplified)
+
+        #Execute signals (long-only)
+        if signal == 1 and position == 0:  # BUY
             shares = cash / price * (1 - commission)
             position = shares
             entry_price = price
-            sl_price = price * (1 - sl_percent)
-            tp_price = price * (1 + tp_percent)
+            sl_price = price * (1 - sl_percent)  # Initial fixed SL
+            #tp_price = price * (1 + tp_percent) if tp_percent else float('inf')  # Optional no TP
+            max_price = price  # Init trailing
             trades.append({'date': date, 'action': 'buy', 'price': price, 'pnl': 0})
             cash = 0.0
-        
-        elif signal == -1 and position == 0:         # SELL (open short)
-            shares = cash / price * (1 - commission)
-            position = -shares  # Negative for short
-            entry_price = price
-            sl_price = price * (1 + sl_percent)  # SL above entry
-            tp_price = price * (1 - tp_percent)  # TP below entry
-            trades.append({'date': date, 'action': 'sell', 'price': price, 'pnl': 0})
-            cash = 0.0  # Cash "locked" in short (simplified)
+        elif signal == -1 and position == 0:
+            continue  #Skips shorts
         
         # --- DAILY EQUITY ---
         if position > 0:  # Long value
@@ -126,5 +157,5 @@ def main():
     for sym in SYMBOLS:
         backtest_symbol(sym)
 
-if  __name__ == "__main__":
-    main()
+#if  __name__ == "__main__":
+main()

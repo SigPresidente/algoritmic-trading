@@ -14,8 +14,8 @@ from account_data import *
 
 #Config:
 symbols = SYMBOLS
-short_ma = 50  # Short-term MA
-long_ma = 200  # Long-term MA
+short_ma = 100  # Short-term MA
+long_ma = 150  # Long-term MA
 rsi_period = 14  # RSI period
 rsi_overbought = 50  # RSI sell threshold
 rsi_oversold = 50    # RSI buy threshold
@@ -44,16 +44,20 @@ def main() :
         # Buy: MA up cross + RSI oversold
         df.loc[
             ((df['SMA_short'] > df['SMA_long']) & (df['Prev_SMA_short'] <= df['Prev_SMA_long'])) &
-            (df['RSI'] < rsi_oversold),
+            (df['RSI'] <= rsi_oversold),
             'Signal'
         ] = 1
 
-        # Sell: MA down cross + RSI overbought
+        # Sell: MA down cross + RSI overbought (but disable for long-only)
         df.loc[
             ((df['SMA_short'] < df['SMA_long']) & (df['Prev_SMA_short'] >= df['Prev_SMA_long'])) &
-            (df['RSI'] > rsi_overbought),
+            (df['RSI'] >= rsi_overbought),
             'Signal'
         ] = -1
+
+#!DISABLE FOR SHORTS        
+        # Long-only: Convert sells to holds
+        df.loc[df['Signal'] == -1, 'Signal'] = 0
 
         # Drop helper columns and NaN rows
         df = df.drop(columns=['Prev_SMA_short', 'Prev_SMA_long'])
