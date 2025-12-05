@@ -1,13 +1,16 @@
 #PRINTS GRAPHS FOR STUDY PURPOSES AND SAVES THEM AS PNG FOR THESIS
 
+#Libraries
 import pandas as pd
 import matplotlib.pyplot as plt
-from account_data import SYMBOLS
 
-# Config
-initial_cash = 5000.0  # Match your backtest initial cash
+#Files
+from account_data import *
+
+#Config
+initial_cash = INITIAL_DEPOSIT
 robo_annual_rate = 0.05  # 5% annual for robo simulation
-output_dir = "."
+output_dir = OUTPUT_DIR
 
 #Helper to annualized volatility
 def annualized_vol(returns, trading_days=252):

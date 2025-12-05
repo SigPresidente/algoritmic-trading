@@ -8,11 +8,11 @@ import os
 #Files
 from account_data import *
 
-#Config: account data and symbols
-symbols = SYMBOLS #Import from account data file
-start_date = "2018-01-01"
+#Config
+symbols = SYMBOLS
+start_date = START_DATE
 end_date = datetime.now().strftime("%Y-%m-%d")
-output_dir = "." #Inside project directory
+output_dir = OUTPUT_DIR
 
 #Check correct installation
 try:
@@ -25,10 +25,10 @@ except ImportError:
 
 #FETCH FROM YFINANCE
 def fetch_and_save_yfinance_data(symbol):
-    file_path = f"{output_dir}/{symbol.lower().replace('^', '')}_historical.csv"  #Creates a .csv file
+    historical_path = f"{output_dir}/{symbol.lower().replace('^', '')}_historical.csv"  #Creates a .csv file
 
-    if os.path.exists(file_path):
-        df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+    if os.path.exists(historical_path):
+        df = pd.read_csv(historical_path, index_col=0, parse_dates=True)
         if df.index.max() >= (datetime.now() - timedelta(days=1)):
             print(f"Data for {symbol} loaded from yfinance cache (up-to-date).")
             return df
@@ -53,8 +53,8 @@ def fetch_and_save_yfinance_data(symbol):
     df = pd.concat([df, new_data]).drop_duplicates().sort_index()
 
     #Save in .CSV format
-    df.to_csv(file_path, index_label="date")
-    print(f"Data for {symbol} saved to {file_path}.")
+    df.to_csv(historical_path, index_label="date")
+    print(f"Data for {symbol} saved to {historical_path}.")
     return df
 
 #Execute functions for both sources and for each symbol

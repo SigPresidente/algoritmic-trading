@@ -12,7 +12,7 @@ import talib as ta
 #Files
 from account_data import *
 
-#Config:
+#Config
 symbols = SYMBOLS
 short_ma = SHORT_MA
 long_ma = LONG_MA

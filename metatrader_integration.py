@@ -8,7 +8,7 @@ import pandas as pd
 from account_data import *
 from import_data import *
 
-#Config:
+#Config
 symbol = 'US100'  #Check symbol for specific broker
 volume = LOT_SIZE
 deviation = SLIPPAGE

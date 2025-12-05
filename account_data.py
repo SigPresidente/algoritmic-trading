@@ -1,11 +1,11 @@
 #VARIOUS CONFIGURATION DATA
 
 #Strategy parameters
-SHORT_MA = 100  # Short-term Moving Average
-LONG_MA = 150  # Long-term Moving Average
-RSI_PERIOD = 14  # RSI period
-RSI_OVERBOUGHT = 50  # RSI sell threshold
-RSI_OVERSOLD = 50    # RSI buy threshold
+SHORT_MA = [50, 100, 150]  # Short-term Moving Averages
+LONG_MA = [70, 150, 200]  # Long-term Moving Averages
+RSI_PERIOD = [7, 10, 14]  # RSI period
+RSI_OVERBOUGHT = [50, 60, 70]  # RSI sell thresholds
+RSI_OVERSOLD = [50, 40, 20]    # RSI buy thresholds
 
 #Account parameters
 SYMBOLS = ["^NDX"]
@@ -25,3 +25,12 @@ SLIPPAGE = 20
 
 #Output directory
 OUTPUT_DIR = "./output"
+
+#Yfinance Config
+START_DATE = "2018-01-01"
+
+#Robo Advisor Config (cost and returns based on risk profiles)
+ROBO_COMMISSION = 0.015 #1.5% commission
+ROBO_LOW_RISK =
+ROBO_MEDIUM_RISK = 
+ROBO_HIGH_RISK =
