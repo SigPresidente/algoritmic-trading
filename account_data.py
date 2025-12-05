@@ -31,6 +31,6 @@ START_DATE = "2018-01-01"
 
 #Robo Advisor Config (cost and returns based on risk profiles)
 ROBO_COMMISSION = 0.015 #1.5% commission
-ROBO_LOW_RISK =
-ROBO_MEDIUM_RISK = 
-ROBO_HIGH_RISK =
+ROBO_LOW_RISK = 0.023
+ROBO_MEDIUM_RISK = 0.463
+ROBO_HIGH_RISK = 1.189 #From MoneyFarm website
