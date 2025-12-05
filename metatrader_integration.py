@@ -9,16 +9,14 @@ from account_data import *
 from import_data import *
 
 #Config:
-symbol = 'US100'  # CHECK SYMBOL FPMarkets
-volume = 0.1  #CHECK LOT DIMENSION
-deviation = 20  #CHECK SLIPPAGE
+symbol = 'US100'  #Check symbol for specific broker
+volume = LOT_SIZE
+deviation = SLIPPAGE
 account = MT5_ACCOUNT
 password = MT5_PASSWORD
 server = MT5_SERVER
-
-#Calculate SL/TP percentages: (Simple Version)
-sl_percent = 0.02  # 2% below/above entry for SL
-tp_percent = 0.04  # 4% above/below entry for TP (1:2 risk-reward)
+sl_percent = STOP_LOSS
+tp_percent = TAKE_PROFIT
 
 #Fetch latest signal:
 def get_latest_signal(csv_path='ndx_signals.csv'):

@@ -4,15 +4,15 @@
 import pandas as pd
 
 #Files
-from account_data import SYMBOLS
+from account_data import *
 
 #Config
-initial_cash = 5000.0
-commission = 0.005  #0.5 % (realistic for robo-advisors)
-sl_percent = 0.02 # 2% SL fixed
-#tp_percent = 0.04  # 4% TP fixed (1:2 ratio)
-trail_percent = 0.02
-output_dir = "."
+initial_cash = INITIAL_DEPOSIT
+commission = COMMISSION
+sl_percent = STOP_LOSS
+tp_percent = TAKE_PROFIT
+trail_percent = TRAIL_PERCENT
+output_dir = OUTPUT_DIR
 
 def backtest_symbol(symbol):
     signals_path = f"{output_dir}/{symbol.lower().replace('^', '')}_signals.csv"

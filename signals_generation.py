@@ -1,9 +1,9 @@
 #USES HISTORICAL DATA TO CALCULATE A STRATEGY AND GENERATE SIGNALS
 
-#STRATEGY: Calculate SMA50 e SMA200 from .csv data for every symbol. Confront and find crossovers. Generate 1/-1/0 signals.
-    #REMOVED MACD (Moving Average Convergence/Divergence)
-    #RELAXED RSI (Relative Strength Index)
-    #REMOVED DMI (Directional Movement Index)
+#STRATEGY: 1. Calculates short moving-average and long moving-average from .csv data for every symbol.
+#          2. Confronts and finds crossovers. 
+#          3. Generates buy/sell signals.
+#          4. Considers RSI (Relative Strength Index) to avoid overbought/oversold conditions
 
 #Libraries
 import pandas as pd
@@ -14,16 +14,17 @@ from account_data import *
 
 #Config:
 symbols = SYMBOLS
-short_ma = 100  # Short-term MA
-long_ma = 150  # Long-term MA
-rsi_period = 14  # RSI period
-rsi_overbought = 50  # RSI sell threshold
-rsi_oversold = 50    # RSI buy threshold
+short_ma = SHORT_MA
+long_ma = LONG_MA
+rsi_period = RSI_PERIOD
+rsi_overbought = RSI_OVERBOUGHT
+rsi_oversold = RSI_OVERSOLD
+output_dir = OUTPUT_DIR
 
 #Load data:
 def main() :
     for sym in symbols:
-        csv_path = f'{sym.lower().replace("^", "")}_historical.csv'
+        csv_path = f"{output_dir}/{sym.lower().replace("^", "")}_historical.csv" 
         df = pd.read_csv(csv_path, index_col='date', parse_dates=["date"])
         df = df.sort_index()  # Ensure sorted by date
 
@@ -67,9 +68,9 @@ def main() :
         print(df[['close', 'SMA_short', 'SMA_long', 'RSI', 'Signal']].tail(10))
 
         # Save updated CSV with signals
-        output_path = f"{sym.lower().replace('^', '')}_signals.csv"
-        df.to_csv(output_path, index_label="date")
-        print(f"Signals saved to {output_path}")
+        signals_path = f"{output_dir}/{sym.lower().replace('^', '')}_signals.csv"
+        df.to_csv(signals_path, index_label="date")
+        print(f"Signals saved to {signals_path}")
 
 if __name__ == "__main__":
     main() 
