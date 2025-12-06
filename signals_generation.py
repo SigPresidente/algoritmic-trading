@@ -14,63 +14,55 @@ from account_data import *
 
 #Config
 symbols = SYMBOLS
-short_ma = SHORT_MA
-long_ma = LONG_MA
-rsi_period = RSI_PERIOD
-rsi_overbought = RSI_OVERBOUGHT
-rsi_oversold = RSI_OVERSOLD
 output_dir = OUTPUT_DIR
+profiles = ['high', 'medium', 'low']
 
-#Load data:
-def main() :
+#Load data
+def main():
     for sym in symbols:
-        csv_path = f"{output_dir}/{sym.lower().replace("^", "")}_historical.csv" 
-        df = pd.read_csv(csv_path, index_col='date', parse_dates=["date"])
-        df = df.sort_index()  # Ensure sorted by date
+        base_path = f"{output_dir}/{sym.lower().replace('^', '')}_historical.csv"
+        df_base = pd.read_csv(base_path, index_col='date', parse_dates=True).sort_index()
 
-        #Calculate Moving Averages (SMA on Closing Price):
-        df['SMA_short'] = df['close'].rolling(window=short_ma).mean()
-        df['SMA_long'] = df['close'].rolling(window=long_ma).mean()
+        for idx, profile in enumerate(profiles):
+            df = df_base.copy()
 
-        #Calculate RSI (Relative Strength Index):
-        df['RSI'] = ta.RSI(df['close'].values, timeperiod=rsi_period)
+            # Load parameters for this risk profile
+            short_ma = SHORT_MA[idx]
+            long_ma  = LONG_MA[idx]
+            rsi_period = RSI_PERIOD[idx]
+            overbought = RSI_OVERBOUGHT[idx]
+            oversold   = RSI_OVERSOLD[idx]
 
-        # Shift previous values for crossover detection
-        df['Prev_SMA_short'] = df['SMA_short'].shift(1)
-        df['Prev_SMA_long'] = df['SMA_long'].shift(1)
+            # Indicators
+            df['SMA_short'] = df['close'].rolling(short_ma).mean()
+            df['SMA_long']  = df['close'].rolling(long_ma).mean()
+            df['RSI'] = ta.RSI(df['close'], timeperiod=rsi_period)
 
-        # Generate Signals: 1 = Buy (all confirm), -1 = Sell (all confirm), 0 = Hold
-        df['Signal'] = 0
+            # Crossover detection
+            df['Prev_short'] = df['SMA_short'].shift(1)
+            df['Prev_long']  = df['SMA_long'].shift(1)
 
-        # Buy: MA up cross + RSI oversold
-        df.loc[
-            ((df['SMA_short'] > df['SMA_long']) & (df['Prev_SMA_short'] <= df['Prev_SMA_long'])) &
-            (df['RSI'] <= rsi_oversold),
-            'Signal'
-        ] = 1
+            df['Signal'] = 0
 
-        # Sell: MA down cross + RSI overbought (but disable for long-only)
-        df.loc[
-            ((df['SMA_short'] < df['SMA_long']) & (df['Prev_SMA_short'] >= df['Prev_SMA_long'])) &
-            (df['RSI'] >= rsi_overbought),
-            'Signal'
-        ] = -1
+            # Buy signal
+            df.loc[(df['SMA_short'] > df['SMA_long']) &
+                   (df['Prev_short'] <= df['Prev_long']) &
+                   (df['RSI'] <= oversold), 'Signal'] = 1
 
-#!DISABLE FOR SHORTS        
-        # Long-only: Convert sells to holds
-        df.loc[df['Signal'] == -1, 'Signal'] = 0
+            # Sell signal (only kept for high/medium)
+            df.loc[(df['SMA_short'] < df['SMA_long']) &
+                   (df['Prev_short'] >= df['Prev_long']) &
+                   (df['RSI'] >= overbought), 'Signal'] = -1
 
-        # Drop helper columns and NaN rows
-        df = df.drop(columns=['Prev_SMA_short', 'Prev_SMA_long'])
-        df = df.dropna()
+            # Low-risk profile → no shorts
+            if profile == 'low':
+                df.loc[df['Signal'] == -1, 'Signal'] = 0
 
-        # Preview results
-        print(df[['close', 'SMA_short', 'SMA_long', 'RSI', 'Signal']].tail(10))
-
-        # Save updated CSV with signals
-        signals_path = f"{output_dir}/{sym.lower().replace('^', '')}_signals.csv"
-        df.to_csv(signals_path, index_label="date")
-        print(f"Signals saved to {signals_path}")
+            # Clean & save
+            df = df.drop(columns=['Prev_short', 'Prev_long']).dropna()
+            out_path = f"{output_dir}/{sym.lower().replace('^', '')}_signals_{profile}.csv"
+            df.to_csv(out_path)
+            print(f"{sym} – {profile} signals → {out_path}")
 
 if __name__ == "__main__":
-    main() 
+    main()
