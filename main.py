@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 
 #Files
+from account_data import *
 import import_data
 import signals_generation
 import metatrader_integration
@@ -20,17 +21,18 @@ def run_cycle():
     print(f"\n[{datetime.now()}] Starting cycle...")
     
     #1) Check/update historical data and save CSVs
-    for sym in import_data.symbols:
+    for sym in SYMBOLS:
         import_data.fetch_and_save_yfinance_data(sym)
     
     #2) Calculate strategy signals and operate on MT5
     signals_generation.main()
     
-    for sym in signals_generation.symbols:
-        csv_path = f"{sym.lower().replace('^', '')}_signals.csv"
-        latest_signal = metatrader_integration.get_latest_signal(csv_path)
-        metatrader_integration.send_order_to_mt5(latest_signal)
-    
+    #COMMENTED OUT FOR DEBUGGING
+    #for sym in SYMBOLS:
+    #    for profile in PROFILES:
+    #        latest_signal = metatrader_integration.get_latest_signal(sym, profile)
+    #        metatrader_integration.send_order_to_mt5(latest_signal, sym, profile)
+
     #3) Run backtesting and save data for graphs
     backtesting.main()
     

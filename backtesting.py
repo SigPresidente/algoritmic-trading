@@ -6,156 +6,91 @@ import pandas as pd
 #Files
 from account_data import *
 
-#Config
-initial_cash = INITIAL_DEPOSIT
-commission = COMMISSION
-sl_percent = STOP_LOSS
-tp_percent = TAKE_PROFIT
-trail_percent = TRAIL_PERCENT
-output_dir = OUTPUT_DIR
+def backtest_symbol(symbol, profile):
+    signals_path = f"{OUTPUT_DIR}/{symbol.lower().replace('^','')}_signals_{profile}.csv"
+    df = pd.read_csv(signals_path, index_col='date', parse_dates=True).sort_index()
 
-def backtest_symbol(symbol):
-    signals_path = f"{output_dir}/{symbol.lower().replace('^', '')}_signals.csv"
-    
-    #Load signals .csv
-    df = pd.read_csv(signals_path, index_col='date', parse_dates=True)
-    df = df.sort_index()
-    
-    #Simulation variables
-    position = 0 #0 = flat, >0 = long shares, <0 = short shares
-    cash = initial_cash
-    entry_price = 0.0
-    sl_price = 0.0
-    tp_price = 0.0
-    max_price = 0.0
-    
+    cash = INITIAL_DEPOSIT
+    position = 0
+    entry_price = sl_price = max_price = min_price = 0.0
+    allow_shorts = profile != 'low' #Low risk only goes long
+
     equity = []
     trades = []
 
     for date, row in df.iterrows():
-        price = row['close']
-        signal = row['Signal']
-        high = row['high']
-        low = row['low']
-        
-        #Update trailing SL if in long
-        if position > 0:
-            max_price = max(max_price, high)  # Update max since entry
-            new_sl = max_price * (1 - trail_percent)
-            sl_price = max(sl_price, new_sl)  # Ratchet up
+        price, high, low, signal = row['close'], row['high'], row['low'], row['Signal']
 
-        # Check SL/TP first (adapted for no fixed TP)
-        if position > 0:
-            if low <= sl_price:  # Hit trailing SL
-                pnl = position * (sl_price - entry_price) - abs(position) * sl_price * commission
-                cash = position * sl_price * (1 - commission)
-                trades.append({'date': date, 'action': 'sell (SL)', 'price': sl_price, 'pnl': pnl})
-                position = 0
-                max_price = 0.0
+        #Trailing stop update
+        if position > 0:                                    
+            max_price = max(max_price, high)
+            sl_price = max(sl_price, max_price * (1 - TRAIL_PERCENT))
+        elif position < 0:                                 
+            min_price = min(min_price, low)
+            sl_price = min(sl_price, min_price * (1 + TRAIL_PERCENT))
 
-#        # --- CHECK SL/TP FIRST (if in position) ---
-#        if position > 0:  # Long
-#            if low <= sl_price:  # Hit SL
-#                pnl = position * (sl_price - entry_price) - abs(position) * sl_price * commission
-#                cash = position * sl_price * (1 - commission)
-#                trades.append({'date': date, 'action': 'sell (SL)', 'price': sl_price, 'pnl': pnl})
-#                position = 0
-#            elif high >= tp_price:  # Hit TP
-#                pnl = position * (tp_price - entry_price) - abs(position) * tp_price * commission
-#                cash = position * tp_price * (1 - commission)
-#                trades.append({'date': date, 'action': 'sell (TP)', 'price': tp_price, 'pnl': pnl})
-#                position = 0
-#        
-#        elif position < 0:  # Short
-#            if high >= sl_price:  # Hit SL (price up)
-#                pnl = abs(position) * (entry_price - sl_price) - abs(position) * sl_price * commission
-#                cash = abs(position) * sl_price * (1 - commission)
-#                trades.append({'date': date, 'action': 'buy (SL)', 'price': sl_price, 'pnl': pnl})
-#                position = 0
-#            elif low <= tp_price:  # Hit TP (price down)
-#                pnl = abs(position) * (entry_price - tp_price) - abs(position) * tp_price * commission
-#                cash = abs(position) * tp_price * (1 - commission)
-#                trades.append({'date': date, 'action': 'buy (TP)', 'price': tp_price, 'pnl': pnl})
-#                position = 0
+        #Stop-loss check
+        if position > 0 and low <= sl_price:
+            pnl = position * (sl_price - entry_price)
+            cash = position * sl_price
+            trades.append({'date': date, 'action': 'sell (SL)', 'price': sl_price, 'pnl': pnl})
+            position = 0
+        elif position < 0 and high >= sl_price:
+            pnl = abs(position) * (entry_price - sl_price)
+            cash += abs(position) * sl_price
+            trades.append({'date': date, 'action': 'buy (SL)', 'price': sl_price, 'pnl': pnl})
+            position = 0
 
-#CHANGED FOR TRAILING STOP LOSS        
-#        # --- EXECUTE SIGNALS (only if flat) ---
-#        if signal == 1 and position == 0:           # BUY (open long)
-#            shares = cash / price * (1 - commission)
-#            position = shares
-#           entry_price = price
-#            sl_price = price * (1 - sl_percent)
-#            tp_price = price * (1 + tp_percent)
-#            trades.append({'date': date, 'action': 'buy', 'price': price, 'pnl': 0})
-#            cash = 0.0
-#        
-#        elif signal == -1 and position == 0:         # SELL (open short)
-#            shares = cash / price * (1 - commission)
-#            position = -shares  # Negative for short
-#            entry_price = price
-#            sl_price = price * (1 + sl_percent)  # SL above entry
-#            tp_price = price * (1 - tp_percent)  # TP below entry
-#            trades.append({'date': date, 'action': 'sell', 'price': price, 'pnl': 0})
-#            cash = 0.0  # Cash "locked" in short (simplified)
+        #New entries (only when flat)
+        if position == 0:
+            if signal == 1:                                      
+                shares = cash / price
+                position = shares
+                entry_price = price
+                sl_price = price * (1 - STOP_LOSS)
+                max_price = price
+                trades.append({'date': date, 'action': 'buy', 'price': price, 'pnl': 0})
+                cash = 0
+            elif signal == -1 and allow_shorts:                  
+                shares = cash / price
+                position = -shares
+                entry_price = price
+                sl_price = price * (1 + STOP_LOSS)
+                min_price = price
+                trades.append({'date': date, 'action': 'sell', 'price': price, 'pnl': 0})
+                cash += shares * price
 
-        #Execute signals (long-only)
-        if signal == 1 and position == 0:  # BUY
-            shares = cash / price * (1 - commission)
-            position = shares
-            entry_price = price
-            sl_price = price * (1 - sl_percent)  # Initial fixed SL
-            #tp_price = price * (1 + tp_percent) if tp_percent else float('inf')  # Optional no TP
-            max_price = price  # Init trailing
-            trades.append({'date': date, 'action': 'buy', 'price': price, 'pnl': 0})
-            cash = 0.0
-        elif signal == -1 and position == 0:
-            continue  #Skips shorts
-        
-        # --- DAILY EQUITY ---
-        if position > 0:  # Long value
-            current_value = cash + position * price
-        elif position < 0:  # Short value (profit if price down)
-            current_value = cash + abs(position) * (entry_price - price)
-        else:
-            current_value = cash
-        
-        equity.append(current_value)
-    
-    # Build final DataFrames
-    equity_df = pd.DataFrame({
-        'date': df.index,
-        'close': df['close'],
-        'equity': equity
-    }).set_index('date')
-    
-    trades_df = pd.DataFrame(trades)
-    
+        #Daily equity
+        equity.append(cash + position * price)
+
     #Save results
-    equity_path = f"{output_dir}/equity_curve_{symbol.lower().replace('^', '')}.csv"
-    equity_df.to_csv(equity_path)
-    print(f"Equity curve → {equity_path}")
+    equity_df = pd.DataFrame({'date': df.index, 'close': df['close'], 'equity': equity}).set_index('date')
+    trades_df = pd.DataFrame(trades)
+
+    equity_df.to_csv(f"{OUTPUT_DIR}/equity_curve_{symbol.lower().replace('^','')}_{profile}.csv")
+    trades_df.to_csv(f"{OUTPUT_DIR}/backtest_trades_{symbol.lower().replace('^','')}_{profile}.csv")
+
+    print(f"{symbol} – {profile} backtest completed")
     
-    trades_path = f"{output_dir}/backtest_trades_{symbol.lower().replace('^', '')}.csv"
-    trades_df.to_csv(trades_path)
-    print(f"Trades log    → {trades_path}")
-    
-    #Summary
-    total_pnl = equity_df['equity'].iloc[-1] - initial_cash
-    num_trades = len(trades_df)
+    #Summary calculations
+    total_closed = len(trades_df[trades_df['pnl'] != 0]) if 'pnl' in trades_df.columns else 0
     winning_trades = len(trades_df[trades_df['pnl'] > 0]) if 'pnl' in trades_df.columns else 0
-    win_rate = winning_trades / (num_trades / 2) if num_trades > 0 else 0   # each pair = 1 trade
+    win_rate = winning_trades / total_closed if total_closed > 0 else 0
+    total_pnl = equity_df['equity'].iloc[-1] - INITIAL_DEPOSIT
+    final_equity = equity_df['equity'].iloc[-1]
     
-    print(f"\n=== {symbol} ===")
-    print(f"Initial capital : ${initial_cash:,.2f}")
-    print(f"Final equity    : ${equity_df['equity'].iloc[-1]:,.2f}")
-    print(f"Total P/L       : ${total_pnl:,.2f} ({total_pnl/initial_cash*100:+.2f}%)")
-    print(f"Number of round-trip trades : {num_trades//2}")
+    #Print summary
+    print(f"\n=== {symbol} {profile} ===")
+    print(f"Initial capital : ${INITIAL_DEPOSIT:,.2f}")
+    print(f"Final equity    : ${final_equity:,.2f}")
+    print(f"Total P/L       : ${total_pnl:,.2f} ({total_pnl / INITIAL_DEPOSIT * 100:+.2f}%)")
+    print(f"Number of round-trip trades : {total_closed}")
     print(f"Win rate        : {win_rate:.1%}\n")
 
-#Run for all symbols
 def main():
     for sym in SYMBOLS:
-        backtest_symbol(sym)
+        for profile in PROFILES:
+            backtest_symbol(sym, profile)
 
-#if  __name__ == "__main__":
-main()
+if __name__ == "__main__":
+    main()

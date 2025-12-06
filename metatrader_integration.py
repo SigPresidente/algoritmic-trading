@@ -1,4 +1,4 @@
-#IMPORTS SIGNALS FROM .CSV AND SENDS ORDERS TO MT5
+#IMPORTS SIGNALS FROM .CSV AND SENDS ORDERS TO MT5 (with fixed SL/TP for easier testing)
 
 #Libraries
 import MetaTrader5 as mt5
@@ -6,55 +6,58 @@ import pandas as pd
 
 #Files
 from account_data import *
-from import_data import *
 
 #Config
-symbol = 'US100'  #Check symbol for specific broker
-volume = LOT_SIZE
-deviation = SLIPPAGE
-account = MT5_ACCOUNT
-password = MT5_PASSWORD
-server = MT5_SERVER
-sl_percent = STOP_LOSS
-tp_percent = TAKE_PROFIT
+mt5_symbol_map = {"^NDX": "US100"}
 
-#Fetch latest signal:
-def get_latest_signal(csv_path='ndx_signals.csv'):
+#Fetch latest signal
+def get_latest_signal(sym, profile):
+    csv_path = f"{OUTPUT_DIR}/{sym.lower().replace('^', '')}_signals_{profile}.csv"
     df = pd.read_csv(csv_path, index_col='date', parse_dates=True)
-    latest_signal = df['Signal'].iloc[-1]  #Last row
-    return latest_signal
+    return df['Signal'].iloc[-1]  #Last row
 
-#Send order:
-def send_order_to_mt5(signal):
+#Send order
+def send_order_to_mt5(signal, sym, profile):
     if not mt5.initialize():
         print("MT5 initialization failed")
         return
     
-    #Login
-    if not mt5.login(account, password=password, server=server):
+    #Log into account
+    if not mt5.login(MT5_ACCOUNT, password=MT5_PASSWORD, server=MT5_SERVER):
         print("MT5 login failed. Check credentials/server.")
         mt5.shutdown()
         return
     
-    #Get current info from MT5 symbol:
-    tick = mt5.symbol_info_tick(symbol)
-    if tick is None:
-        print(f"Invalid symbol: {symbol}")
+    mt5_symbol = mt5_symbol_map.get(sym, None)
+    if mt5_symbol is None:
+        print(f"No MT5 symbol mapping for {sym}")
         mt5.shutdown()
         return
     
-    #Prepare order request following signal
+    #Get current info from MT5 symbol
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    if tick is None:
+        print(f"Invalid symbol: {mt5_symbol}")
+        mt5.shutdown()
+        return
+    
+    idx = PROFILES.index(profile)
+    sl_percent = STOP_LOSS[idx] if isinstance(STOP_LOSS, list) else STOP_LOSS
+    tp_percent = TAKE_PROFIT[idx] if isinstance(TAKE_PROFIT, list) else TAKE_PROFIT
+   
+    sl = 0.0
+    tp = 0.0
     if signal == 1:  # Buy
         order_type = mt5.ORDER_TYPE_BUY
         price = tick.ask  # Buy at ask price
-        sl = price * (1 - sl_percent)  #SL 2% below entry
-        tp = price * (1 + tp_percent)  #TP 4% above entry
+        sl = price * (1 - sl_percent)  # SL below entry
+        tp = price * (1 + tp_percent)  # TP above entry
         comment = "Python Buy Signal"
     elif signal == -1:  # Sell
         order_type = mt5.ORDER_TYPE_SELL
         price = tick.bid  # Sell at bid price
-        sl = price * (1 + sl_percent)  #SL 2% above entry
-        tp = price * (1 - tp_percent)  #TP 4% below entry
+        sl = price * (1 + sl_percent)  # SL above entry
+        tp = price * (1 - tp_percent)  # TP below entry
         comment = "Python Sell Signal"
     else:  # Hold
         print("No signal (Hold). No order sent.")
@@ -63,18 +66,20 @@ def send_order_to_mt5(signal):
     
     request = {
         "action": mt5.TRADE_ACTION_DEAL,
-        "symbol": symbol,
-        "volume": volume,
+        "symbol": mt5_symbol,
+        "volume": LOT_SIZE,
         "type": order_type,
         "price": price,
-        "deviation": deviation,
+        "sl": sl,
+        "tp": tp,
+        "deviation": SLIPPAGE,
         "magic": MAGIC_NUMBER,
         "comment": comment,
-        "type_time": mt5.ORDER_TIME_GTC,  #Good till cancel
-        "type_filling": mt5.ORDER_FILLING_IOC,  #Immediate or cancel
+        "type_time": mt5.ORDER_TIME_GTC,  # Good till cancel
+        "type_filling": mt5.ORDER_FILLING_IOC,  # Immediate or cancel
     }
     
-    #Send order
+    # Send order
     result = mt5.order_send(request)
     if result.retcode != mt5.TRADE_RETCODE_DONE:
         print(f"Order failed: {result.comment}")
@@ -82,7 +87,3 @@ def send_order_to_mt5(signal):
         print(f"Order executed: {result.order} at price {result.price}")
     
     mt5.shutdown()
-
-# Example usage: Get signal and send
-latest_signal = get_latest_signal()  #From .CSV
-send_order_to_mt5(latest_signal)

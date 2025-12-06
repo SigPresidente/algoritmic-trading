@@ -1,4 +1,4 @@
-#USES HISTORICAL DATA TO CALCULATE A STRATEGY AND GENERATE SIGNALS
+#USES HISTORICAL DATA TO CALCULATE A STRATEGY AND GENERATE SIGNALS, BASED ON PROFILE RISK
 
 #STRATEGY: 1. Calculates short moving-average and long moving-average from .csv data for every symbol.
 #          2. Confronts and finds crossovers. 
@@ -12,18 +12,13 @@ import talib as ta
 #Files
 from account_data import *
 
-#Config
-symbols = SYMBOLS
-output_dir = OUTPUT_DIR
-profiles = ['high', 'medium', 'low']
-
 #Load data
 def main():
-    for sym in symbols:
-        base_path = f"{output_dir}/{sym.lower().replace('^', '')}_historical.csv"
+    for sym in SYMBOLS:
+        base_path = f"{OUTPUT_DIR}/{sym.lower().replace('^', '')}_historical.csv"
         df_base = pd.read_csv(base_path, index_col='date', parse_dates=True).sort_index()
 
-        for idx, profile in enumerate(profiles):
+        for idx, profile in enumerate(PROFILES):
             df = df_base.copy()
 
             # Load parameters for this risk profile
@@ -44,23 +39,23 @@ def main():
 
             df['Signal'] = 0
 
-            # Buy signal
+            #Buy signal
             df.loc[(df['SMA_short'] > df['SMA_long']) &
                    (df['Prev_short'] <= df['Prev_long']) &
                    (df['RSI'] <= oversold), 'Signal'] = 1
 
-            # Sell signal (only kept for high/medium)
+            #Sell signal
             df.loc[(df['SMA_short'] < df['SMA_long']) &
                    (df['Prev_short'] >= df['Prev_long']) &
                    (df['RSI'] >= overbought), 'Signal'] = -1
 
-            # Low-risk profile → no shorts
+            #Low-risk profile (only long positions)
             if profile == 'low':
                 df.loc[df['Signal'] == -1, 'Signal'] = 0
 
             # Clean & save
             df = df.drop(columns=['Prev_short', 'Prev_long']).dropna()
-            out_path = f"{output_dir}/{sym.lower().replace('^', '')}_signals_{profile}.csv"
+            out_path = f"{OUTPUT_DIR}/{sym.lower().replace('^', '')}_signals_{profile}.csv"
             df.to_csv(out_path)
             print(f"{sym} – {profile} signals → {out_path}")
 

@@ -9,10 +9,7 @@ import os
 from account_data import *
 
 #Config
-symbols = SYMBOLS
-start_date = START_DATE
 end_date = datetime.now().strftime("%Y-%m-%d")
-output_dir = OUTPUT_DIR
 
 #Check correct installation
 try:
@@ -25,7 +22,7 @@ except ImportError:
 
 #FETCH FROM YFINANCE
 def fetch_and_save_yfinance_data(symbol):
-    historical_path = f"{output_dir}/{symbol.lower().replace('^', '')}_historical.csv"  #Creates a .csv file
+    historical_path = f"{OUTPUT_DIR}/{symbol.lower().replace('^', '')}_historical.csv"  #Creates a .csv file
 
     if os.path.exists(historical_path):
         df = pd.read_csv(historical_path, index_col=0, parse_dates=True)
@@ -39,7 +36,7 @@ def fetch_and_save_yfinance_data(symbol):
         print(f"Fetching new data for {symbol}.")
 
     #Fetching data from yfinance
-    new_data = yf.download(symbol, start=start_date, end=end_date)
+    new_data = yf.download(symbol, start=START_DATE, end=end_date)
     new_data.index = pd.to_datetime(new_data.index)
 
     #Standardize column (handle single or multi-level)
@@ -59,7 +56,7 @@ def fetch_and_save_yfinance_data(symbol):
 
 #Execute functions for both sources and for each symbol
 def main():
-    for sym in symbols:
+    for sym in SYMBOLS:
         data_yfinance= fetch_and_save_yfinance_data(sym)
         print("FROM YFINANCE:", data_yfinance.tail(5)) #Check if function ran correctly
 
