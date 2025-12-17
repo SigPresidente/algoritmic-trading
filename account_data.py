@@ -3,18 +3,18 @@
 #Strategy parameters with profiles: [0]= high risk, [1] = medium, [2] = low, [3] = PAC
 PROFILES        = ["high", "medium", "low", "pac"]
 SHORT_MA        = [50,  50, 50, None]   # high, medium, low, PAC (N/A)
-LONG_MA         = [120,  120, 200, None]
-RSI_PERIOD      = [10,   10,  14, None]
-RSI_OVERBOUGHT  = [65,  65,  60, None]
-RSI_OVERSOLD    = [35,  35,  40, None]
+LONG_MA         = [120,  120, 120, None]
+RSI_PERIOD      = [10,   10,  10, None]
+RSI_OVERBOUGHT  = [65,  65,  65, None]
+RSI_OVERSOLD    = [35,  35,  35, None]
+STOP_LOSS       = [0.03, 0.025, 0.02]    # 3%, 2.5%, 2% initial stop loss
+TRAIL_PERCENT   = [0.03, 0.02,  0.015]   # 3%, 2%, 1.5% trailing stop
+TAKE_PROFIT     = [0.08, 0.05,  0.03]    # 8%, 5%, 3% take profit (if used)
 
 #Account parameters
 SYMBOLS         = ["^NDX"]
 INITIAL_DEPOSIT = 5000
 COMMISSION      = 0.0005 #spread commissions fixed for simplicity, for every trade
-STOP_LOSS       = 0.02 #2% SL fixed
-TAKE_PROFIT     = 0.04 #4% TP fixed (when used)
-TRAIL_PERCENT   = 0.02 #2% trailing stop loss
 
 #PAC (Piano Accumulo Capitale) parameters
 PAC_MONTHLY_INVESTMENT = 100  # Amount to invest each month

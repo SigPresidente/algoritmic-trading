@@ -1,4 +1,4 @@
-#IMPORTS SIGNALS FROM .CSV AND SENDS ORDERS TO MT5 (with fixed SL/TP for easier testing)
+#IMPORTS SIGNALS FROM .CSV AND SENDS ORDERS TO MT5
 
 #Libraries
 import MetaTrader5 as mt5
@@ -41,9 +41,17 @@ def send_order_to_mt5(signal, sym, profile):
         mt5.shutdown()
         return
     
-    idx = PROFILES.index(profile)
-    sl_percent = STOP_LOSS[idx] if isinstance(STOP_LOSS, list) else STOP_LOSS
-    tp_percent = TAKE_PROFIT[idx] if isinstance(TAKE_PROFIT, list) else TAKE_PROFIT
+    # Get profile-specific risk parameters (skip PAC as it's not for MT5)
+    if profile == 'pac':
+        print("PAC profile doesn't use MT5 trading. Skipping.")
+        mt5.shutdown()
+        return
+    
+    #Make calculations for SL/TP/Trail
+    profile_idx = PROFILES.index(profile)
+    sl_percent = STOP_LOSS[profile_idx]
+    tp_percent = TAKE_PROFIT[profile_idx]
+    trail_percent = TRAIL_PERCENT[profile_idx]
    
     sl = 0.0
     tp = 0.0
@@ -52,13 +60,13 @@ def send_order_to_mt5(signal, sym, profile):
         price = tick.ask  # Buy at ask price
         sl = price * (1 - sl_percent)  # SL below entry
         tp = price * (1 + tp_percent)  # TP above entry
-        comment = "Python Buy Signal"
+        comment = f"Python Buy {profile.upper()}"
     elif signal == -1:  # Sell
         order_type = mt5.ORDER_TYPE_SELL
         price = tick.bid  # Sell at bid price
         sl = price * (1 + sl_percent)  # SL above entry
         tp = price * (1 - tp_percent)  # TP below entry
-        comment = "Python Sell Signal"
+        comment = f"Python Sell {profile.upper()}"
     else:  # Hold
         print("No signal (Hold). No order sent.")
         mt5.shutdown()
@@ -85,5 +93,9 @@ def send_order_to_mt5(signal, sym, profile):
         print(f"Order failed: {result.comment}")
     else:
         print(f"Order executed: {result.order} at price {result.price}")
+        print(f"  Profile: {profile.upper()}")
+        print(f"  SL: {sl:.2f} ({sl_percent*100:.1f}%)")
+        print(f"  TP: {tp:.2f} ({tp_percent*100:.1f}%)")
+        print(f"  Trailing: {trail_percent*100:.1f}%")
     
     mt5.shutdown()

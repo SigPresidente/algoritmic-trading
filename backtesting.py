@@ -6,7 +6,7 @@ import pandas as pd
 #Files
 from account_data import *
 
-#Added taxes for Italy
+#Calculate and deducts taxes (Italy)
 def apply_italy_tax(equity_series, dates):
     equity_after_tax = equity_series.copy()
     yearly_start_equity = INITIAL_DEPOSIT
@@ -53,7 +53,7 @@ def backtest_symbol(symbol, profile):
     df = pd.read_csv(signals_path, index_col='date', parse_dates=True).sort_index()
 
     if profile == 'pac':
-        #PAC Strategy: Buy fixed amount monthly, never sell
+        # PAC Strategy: Buy fixed amount monthly, never sell
         cash = INITIAL_DEPOSIT
         total_shares = 0
         equity = []
@@ -81,11 +81,15 @@ def backtest_symbol(symbol, profile):
         equity = equity_after_tax.tolist()
         
     else:
-        #Original trading strategies
+        # Original trading strategies
         cash = INITIAL_DEPOSIT
         position = 0
         entry_price = sl_price = max_price = min_price = 0.0
         allow_shorts = profile != 'low' #Low risk only goes long
+        profile_idx = PROFILES.index(profile)
+        stop_loss_pct = STOP_LOSS[profile_idx]
+        trail_pct = TRAIL_PERCENT[profile_idx]
+        take_profit_pct = TAKE_PROFIT[profile_idx]
 
         equity = []
         trades = []
@@ -96,10 +100,10 @@ def backtest_symbol(symbol, profile):
             #Trailing stop update
             if position > 0:                                    
                 max_price = max(max_price, high)
-                sl_price = max(sl_price, max_price * (1 - TRAIL_PERCENT))
+                sl_price = max(sl_price, max_price * (1 - trail_pct))
             elif position < 0:                                 
                 min_price = min(min_price, low)
-                sl_price = min(sl_price, min_price * (1 + TRAIL_PERCENT))
+                sl_price = min(sl_price, min_price * (1 + trail_pct))
 
             #Stop-loss check
             if position > 0 and low <= sl_price:
@@ -122,7 +126,7 @@ def backtest_symbol(symbol, profile):
                     position = shares
                     entry_price = price
                     commission_cost = shares * price * COMMISSION
-                    sl_price = price * (1 - STOP_LOSS)
+                    sl_price = price * (1 - stop_loss_pct)
                     max_price = price
                     trades.append({'date': date, 'action': 'buy', 'price': price, 'pnl': 0, 'commission': commission_cost})
                     cash = 0
@@ -131,7 +135,7 @@ def backtest_symbol(symbol, profile):
                     position = -shares
                     entry_price = price
                     commission_cost = shares * price * COMMISSION
-                    sl_price = price * (1 + STOP_LOSS)
+                    sl_price = price * (1 + stop_loss_pct)
                     min_price = price
                     trades.append({'date': date, 'action': 'sell', 'price': price, 'pnl': 0, 'commission': commission_cost})
                     cash += shares * price - commission_cost
