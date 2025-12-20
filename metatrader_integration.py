@@ -8,7 +8,7 @@ import pandas as pd
 from account_data import *
 
 #Config
-mt5_symbol_map = {"^NDX": "US100"}
+mt5_symbol_map = {"^NDX": "US100", "^SPX": "US500", "^GDAXI": "GER40"}
 
 #Fetch latest signal
 def get_latest_signal(sym, profile):

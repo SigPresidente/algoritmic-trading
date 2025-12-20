@@ -68,14 +68,10 @@ def main():
                        (df['Prev_short'] >= df['Prev_long']) &
                        (df['RSI'] >= overbought), 'Signal'] = -1
 
-                #Low-risk profile (only long positions)
-                if profile == 'low':
-                    df.loc[df['Signal'] == -1, 'Signal'] = 0
-
-                # Clean
+                #Clean
                 df = df.drop(columns=['Prev_short', 'Prev_long'])
 
-            # Save (for non-PAC profiles, since PAC already saved above)
+            # Save (for non-PAC profiles, PAC already saved)
             df = df.dropna()
             out_path = f"{OUTPUT_DIR}/{sym.lower().replace('^', '')}_signals_{profile}.csv"
             df.to_csv(out_path)

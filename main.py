@@ -15,7 +15,7 @@ import backtesting
 import print_graphs
 
 #Config for checking intervals (in seconds)
-check_interval = 300 #check every 5 mins
+check_interval = 43200 #2 checks a day
 backtest_interval = 86400 #1 backtest a day
 
 #Flag for manual cycle shutdown
@@ -30,32 +30,59 @@ def signal_handler(sig, frame):
 def run_cycle():
     print(f"\n[{datetime.now()}] Starting cycle...")
     
+    cycle_success = True
+    
+    # 1) Check/update historical data and save CSVs
+    print("\n[STEP 1/4] Importing historical data...")
     try:
-        #1) Check/update historical data and save CSVs
         for sym in SYMBOLS:
-            import_data.fetch_and_save_yfinance_data(sym)
-        
-        #2) Calculate strategy signals and operate on MT5
-        signals_generation.main()
-        
-        #COMMENTED OUT FOR DEBUGGING
-        #for sym in SYMBOLS:
-        #    for profile in PROFILES:
-        #        latest_signal = metatrader_integration.get_latest_signal(sym, profile)
-        #        metatrader_integration.send_order_to_mt5(latest_signal, sym, profile)
-
-        #3) Run backtesting and save data for graphs
-        backtesting.main()
-        
-        #4) Generate and save graphs
-        print_graphs.main() 
-        
-        print(f"[{datetime.now()}] Cycle complete.")
-        return True
-        
+            try:
+                import_data.fetch_and_save_yfinance_data(sym)
+            except Exception as e:
+                print(f"[ERROR] Failed to import data for {sym}: {e}")
+                cycle_success = False
     except Exception as e:
-        print(f"[ERROR] Cycle failed: {e}")
-        return False
+        print(f"[ERROR] Data import failed: {e}")
+        cycle_success = False
+    
+    # 2) Calculate strategy signals and operate on MT5
+    print("\n[STEP 2/4] Generating signals...")
+    try:
+        signals_generation.main()
+    except Exception as e:
+        print(f"[ERROR] Signal generation failed: {e}")
+        cycle_success = False
+    
+    #COMMENTED OUT FOR DEBUGGING
+    #for sym in SYMBOLS:
+    #    for profile in PROFILES:
+    #        latest_signal = metatrader_integration.get_latest_signal(sym, profile)
+    #        metatrader_integration.send_order_to_mt5(latest_signal, sym, profile)
+
+    # 3) Run backtesting and save data for graphs
+    print("\n[STEP 3/4] Running backtests...")
+    try:
+        backtest_success = backtesting.main()
+        if not backtest_success:
+            print("[WARNING] Some backtests failed, but continuing...")
+    except Exception as e:
+        print(f"[ERROR] Backtesting failed: {e}")
+        cycle_success = False
+    
+    # 4) Generate and save graphs (continue even if some data is missing)
+    print("\n[STEP 4/4] Generating graphs...")
+    try:
+        print_graphs.main()
+    except Exception as e:
+        print(f"[ERROR] Graph generation failed: {e}")
+        cycle_success = False
+    
+    if cycle_success:
+        print(f"\n[{datetime.now()}] Cycle completed successfully.")
+    else:
+        print(f"\n[{datetime.now()}] Cycle completed with some errors (check logs above).")
+    
+    return cycle_success
 
 #Manual cycle interruption
 def countdown_with_interrupt(seconds):
@@ -75,6 +102,8 @@ if __name__ == "__main__":
     print("="*60)
     print("TRADING BOT STARTED")
     print("="*60)
+    print(f"Total capital: ${INITIAL_DEPOSIT:,.2f}")
+    print(f"Capital per symbol: ${INITIAL_DEPOSIT / len(SYMBOLS):,.2f}")
     print(f"Check interval: {check_interval} seconds ({check_interval/60:.1f} minutes)")
     print(f"Symbols: {', '.join(SYMBOLS)}")
     print(f"Profiles: {', '.join(PROFILES)}")
@@ -100,7 +129,7 @@ if __name__ == "__main__":
             if not countdown_with_interrupt(check_interval):
                 break
         else:
-            print(f"\n[WARNING] Cycle failed. Waiting 60 seconds before retry...")
+            print(f"\n[WARNING] Cycle had errors. Waiting 60 seconds before retry...")
             if not countdown_with_interrupt(60):
                 break
     

@@ -1,4 +1,4 @@
-# BACKTESTING TOOL FOR EVERY SYMBOL, CHECKS STRATEGY AND GENERATES P/L RESULTS
+#BACKTESTING TOOL FOR EVERY SYMBOL, CHECKS STRATEGY AND GENERATES P/L RESULTS
 
 #Libraries
 import pandas as pd
@@ -9,7 +9,7 @@ from account_data import *
 #Calculate and deducts taxes (Italy)
 def apply_italy_tax(equity_series, dates):
     equity_after_tax = equity_series.copy()
-    yearly_start_equity = INITIAL_DEPOSIT
+    yearly_start_equity = INITIAL_DEPOSIT / len(SYMBOLS)  # Adjusted for split capital
     
     #Group by year
     years = dates.year.unique()
@@ -49,12 +49,22 @@ def apply_italy_tax(equity_series, dates):
     return equity_after_tax
 
 def backtest_symbol(symbol, profile):
+    #Calculate max potential spending based on number of symbols
+    capital_per_symbol = INITIAL_DEPOSIT / len(SYMBOLS)
+    
     signals_path = f"{OUTPUT_DIR}/{symbol.lower().replace('^','')}_signals_{profile}.csv"
-    df = pd.read_csv(signals_path, index_col='date', parse_dates=True).sort_index()
+    
+    try:
+        df = pd.read_csv(signals_path, index_col='date', parse_dates=True).sort_index()
+    except FileNotFoundError:
+        print(f"[WARNING] Signal file not found: {signals_path}")
+        return False
 
     if profile == 'pac':
-        # PAC Strategy: Buy fixed amount monthly, never sell
-        cash = INITIAL_DEPOSIT
+        #PAC Strategy: Buy fixed amount monthly, never sell, split monthly investment across symbols
+        monthly_investment_per_symbol = PAC_MONTHLY_INVESTMENT / len(SYMBOLS)
+        
+        cash = capital_per_symbol
         total_shares = 0
         equity = []
         trades = []
@@ -63,33 +73,31 @@ def backtest_symbol(symbol, profile):
             price = row['close']
             signal = row['Signal']
             
-            # Buy signal (first day of month)
-            if signal == 1 and cash >= PAC_MONTHLY_INVESTMENT:
-                # Account for commission when buying
-                shares_to_buy = PAC_MONTHLY_INVESTMENT / (price * (1 + COMMISSION))
+            #Buy signal (first day of month)
+            if signal == 1 and cash >= monthly_investment_per_symbol:
+                #Account for commission when buying
+                shares_to_buy = monthly_investment_per_symbol / (price * (1 + COMMISSION))
                 commission_cost = shares_to_buy * price * COMMISSION
                 total_shares += shares_to_buy
-                cash -= PAC_MONTHLY_INVESTMENT
-                trades.append({'date': date, 'action': 'buy', 'price': price, 'amount': PAC_MONTHLY_INVESTMENT, 'shares': shares_to_buy, 'commission': commission_cost})
+                cash -= monthly_investment_per_symbol
+                trades.append({'date': date, 'action': 'buy', 'price': price, 'amount': monthly_investment_per_symbol, 'shares': shares_to_buy, 'commission': commission_cost})
             
-            # Daily equity (cash + value of holdings)
+            #Daily equity (cash + value of holdings)
             equity.append(cash + total_shares * price)
         
-        # Apply Italy tax
+        #Detract taxes
         equity_series = pd.Series(equity, index=df.index)
         equity_after_tax = apply_italy_tax(equity_series, df.index)
         equity = equity_after_tax.tolist()
         
     else:
-        # Original trading strategies
-        cash = INITIAL_DEPOSIT
+        #Original trading strategy: buy/sell following signals
+        cash = capital_per_symbol
         position = 0
         entry_price = sl_price = max_price = min_price = 0.0
-        allow_shorts = profile != 'low' #Low risk only goes long
         profile_idx = PROFILES.index(profile)
         stop_loss_pct = STOP_LOSS[profile_idx]
         trail_pct = TRAIL_PERCENT[profile_idx]
-        take_profit_pct = TAKE_PROFIT[profile_idx]
 
         equity = []
         trades = []
@@ -122,7 +130,7 @@ def backtest_symbol(symbol, profile):
             #New entries (only when flat)
             if position == 0:
                 if signal == 1:                                      
-                    shares = cash / (price * (1 + COMMISSION))  # Account for commission on entry
+                    shares = cash / (price * (1 + COMMISSION))  #Account for commission on entry
                     position = shares
                     entry_price = price
                     commission_cost = shares * price * COMMISSION
@@ -130,8 +138,8 @@ def backtest_symbol(symbol, profile):
                     max_price = price
                     trades.append({'date': date, 'action': 'buy', 'price': price, 'pnl': 0, 'commission': commission_cost})
                     cash = 0
-                elif signal == -1 and allow_shorts:
-                    shares = cash / (price * (1 + COMMISSION))  # Account for commission on entry
+                elif signal == -1:
+                    shares = cash / (price * (1 + COMMISSION))  #Account for commission on entry
                     position = -shares
                     entry_price = price
                     commission_cost = shares * price * COMMISSION
@@ -143,7 +151,7 @@ def backtest_symbol(symbol, profile):
             #Daily equity
             equity.append(cash + position * price)
         
-        # Apply Italy tax for trading strategies
+        #Deduct taxes (italy)
         equity_series = pd.Series(equity, index=df.index)
         equity_after_tax = apply_italy_tax(equity_series, df.index)
         equity = equity_after_tax.tolist()
@@ -155,11 +163,11 @@ def backtest_symbol(symbol, profile):
     equity_df.to_csv(f"{OUTPUT_DIR}/equity_curve_{symbol.lower().replace('^','')}_{profile}.csv")
     trades_df.to_csv(f"{OUTPUT_DIR}/backtest_trades_{symbol.lower().replace('^','')}_{profile}.csv", index=False)
 
-    print(f"{symbol} — {profile} backtest completed (with Italy 26% tax)")
+    print(f"{symbol} — {profile} backtest completed (with Italy 26% tax, capital split across {len(SYMBOLS)} symbols)")
     
     #Summary calculations
     if profile == 'pac':
-        total_invested = INITIAL_DEPOSIT + (len(trades) * PAC_MONTHLY_INVESTMENT)
+        total_invested = capital_per_symbol + (len(trades) * monthly_investment_per_symbol)
         total_closed = len(trades)
         win_rate = 0  # N/A for PAC
     else:
@@ -167,26 +175,45 @@ def backtest_symbol(symbol, profile):
         winning_trades = len(trades_df[trades_df['pnl'] > 0]) if 'pnl' in trades_df.columns else 0
         win_rate = winning_trades / total_closed if total_closed > 0 else 0
     
-    total_pnl = equity_df['equity'].iloc[-1] - INITIAL_DEPOSIT
+    total_pnl = equity_df['equity'].iloc[-1] - capital_per_symbol
     final_equity = equity_df['equity'].iloc[-1]
     
     #Print summary
-    print(f"\n=== {symbol} {profile.upper()} (After Italy Tax) ===")
-    print(f"Initial capital : ${INITIAL_DEPOSIT:,.2f}")
+    print(f"\n=== {symbol} {profile.upper()} (After Italy Tax, Split Capital) ===")
+    print(f"Initial capital : ${capital_per_symbol:,.2f} (${INITIAL_DEPOSIT:,.2f} / {len(SYMBOLS)} symbols)")
     if profile == 'pac':
         print(f"Total invested  : ${total_invested:,.2f}")
         print(f"Monthly buys    : {total_closed}")
     print(f"Final equity    : ${final_equity:,.2f}")
-    print(f"Total P/L       : ${total_pnl:,.2f} ({total_pnl / INITIAL_DEPOSIT * 100:+.2f}%)")
+    print(f"Total P/L       : ${total_pnl:,.2f} ({total_pnl / capital_per_symbol * 100:+.2f}%)")
     if profile != 'pac':
         print(f"Number of trades: {total_closed}")
         print(f"Win rate        : {win_rate:.1%}")
     print()
+    
+    return True
 
 def main():
+    success_count = 0
+    fail_count = 0
+    
     for sym in SYMBOLS:
         for profile in PROFILES:
-            backtest_symbol(sym, profile)
+            try:
+                result = backtest_symbol(sym, profile)
+                if result:
+                    success_count += 1
+                else:
+                    fail_count += 1
+            except Exception as e:
+                print(f"[ERROR] Failed to backtest {sym} {profile}: {e}")
+                fail_count += 1
+    
+    print(f"\n{'='*60}")
+    print(f"Backtesting complete: {success_count} successful, {fail_count} failed")
+    print(f"{'='*60}\n")
+    
+    return success_count > 0  #Return True if at least one backtest succeeded
 
 if __name__ == "__main__":
     main()
