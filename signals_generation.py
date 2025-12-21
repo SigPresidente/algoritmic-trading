@@ -23,7 +23,7 @@ def main():
             df = df_base.copy()
 
             if profile == 'pac':
-                # PAC strategy: Buy signal on first trading day of each month
+                #PAC strategy: Buy signal on first trading day of each month
                 df['Signal'] = 0
                 df['year_month'] = df.index.to_period('M')
                 

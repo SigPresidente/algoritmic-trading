@@ -197,6 +197,7 @@ def main():
     success_count = 0
     fail_count = 0
     
+    #Backtests for all symbols and profiles
     for sym in SYMBOLS:
         for profile in PROFILES:
             try:

@@ -191,7 +191,7 @@ def main():
             ax.plot(bench_df.index, bench_df['close'] / bench_df['close'].iloc[0] * capital_per_symbol, 
                    label=f'Benchmark ({sym})', linewidth=2.5, color='black', linestyle=':', alpha=0.7)
             
-            ax.set_title(f'Equity Curve Comparison - {sym} (After 26% Italy Tax, Split Capital)', 
+            ax.set_title(f'Equity Curve Comparison - {sym} only',
                         fontsize=17, fontweight='bold', pad=20)
             ax.set_xlabel('Date', fontsize=13, fontweight='bold')
             ax.set_ylabel('Portfolio Value ($)', fontsize=13, fontweight='bold')
@@ -319,7 +319,7 @@ def main():
         #5) Performance Metrics - Algorithm vs Moneyfarm (per symbol)
         try:
             fig, axes = plt.subplots(2, 2, figsize=(18, 13))
-            fig.suptitle(f'Performance Metrics - {sym} (After 26% Italy Tax, Split Capital)', 
+            fig.suptitle(f'Performance Metrics - {sym} only', 
                         fontsize=17, fontweight='bold', y=0.995)
             
             #Use only profiles with robo comparison for this chart
@@ -347,7 +347,7 @@ def main():
                 axes[0, 0].set_title('Total Return (%) - Algorithm vs Moneyfarm', fontsize=13, fontweight='bold')
                 axes[0, 0].set_xticks(x)
                 axes[0, 0].set_xticklabels([profile_labels[p] for p in comparison_profiles], fontsize=10)
-                axes[0, 0].legend(fontsize=10)
+                axes[0, 0].legend(fontsize=10, loc='upper left')
                 axes[0, 0].grid(True, alpha=0.3, axis='y')
                 axes[0, 0].axhline(y=0, color='gray', linestyle='-', linewidth=0.8)
             
@@ -361,7 +361,7 @@ def main():
                 axes[0, 1].text(bar.get_x() + bar.get_width()/2., height,
                                f'{height:.2f}', ha='center', va='bottom' if height >= 0 else 'top', 
                                fontsize=10, fontweight='bold')
-            axes[0, 1].set_title('Sharpe Ratio (All Profiles)', fontsize=13, fontweight='bold')
+            axes[0, 1].set_title('Sharpe Ratio (%/%) - All Profiles', fontsize=13, fontweight='bold')
             axes[0, 1].set_xticks(x_all)
             axes[0, 1].set_xticklabels([profile_labels[p] for p in available_profiles], fontsize=10)
             axes[0, 1].grid(True, alpha=0.3, axis='y')
@@ -485,7 +485,7 @@ def main():
                     ax1.grid(True, alpha=0.3)
                     
                     #Bottom: Monthly investment markers on price chart
-                    ax2.plot(pac_df.index, pac_df['close'], label=f'{sym} Price', 
+                    ax2.plot(pac_df.index, pac_df['close'], label=f'{sym} Price ($)', 
                             linewidth=2, color='black', alpha=0.7)
                     ax2.scatter(pac_trades['date'].values, pac_trades['price'].values, 
                                color='#06A77D', s=80, alpha=0.7, zorder=5, label='Monthly Purchases')
@@ -636,7 +636,7 @@ def main():
                        linewidth=2.5, color=colors[profile], linestyle='--', alpha=0.6)
         
         ax.set_yscale('log')
-        ax.set_title('Total Portfolio Growth - All Profiles (Log Scale)\nAggregated across all symbols - Better visualization for large differences', 
+        ax.set_title('Total Portfolio Growth - All Symbols (Logarithmic Scale)', 
                     fontsize=18, fontweight='bold', pad=20)
         ax.set_xlabel('Date', fontsize=14, fontweight='bold')
         ax.set_ylabel('Portfolio Value Multiplier (Log Scale)', fontsize=14, fontweight='bold')
@@ -799,7 +799,7 @@ def main():
                         table[(i+1, j)].set_facecolor(colors[profile])
                         table[(i+1, j)].set_alpha(0.3)
         
-        plt.title('Total Portfolio Performance Summary - All Profiles', 
+        plt.title('Total Portfolio Performance Summary', 
                  fontsize=16, fontweight='bold', pad=20)
         plt.tight_layout()
         plt.savefig(f"{OUTPUT_DIR}/portfolio_performance_table.png", dpi=300, bbox_inches='tight')
@@ -810,7 +810,7 @@ def main():
         print(f"[ERROR] Failed to create portfolio-level graphs: {e}")
 
     print("\n" + "="*60)
-    print("All graphs completed")
+    print("All portfolio graphs completed")
     print("="*60)
 
 if __name__ == "__main__":
