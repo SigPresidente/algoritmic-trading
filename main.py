@@ -32,7 +32,7 @@ def run_cycle():
     
     cycle_success = True
     
-    # 1) Check/update historical data and save CSVs
+    # 1)Check/update historical data and save CSVs
     print("\n[STEP 1/4] Importing historical data...")
     try:
         for sym in SYMBOLS:
@@ -45,7 +45,7 @@ def run_cycle():
         print(f"[ERROR] Data import failed: {e}")
         cycle_success = False
     
-    # 2) Calculate strategy signals and operate on MT5
+    # 2)Calculate strategy signals and operate on MT5
     print("\n[STEP 2/4] Generating signals...")
     try:
         signals_generation.main()
@@ -53,13 +53,13 @@ def run_cycle():
         print(f"[ERROR] Signal generation failed: {e}")
         cycle_success = False
     
-    #COMMENTED OUT FOR DEBUGGING
+    #COMMENT OUT when debugging
     #for sym in SYMBOLS:
     #    for profile in PROFILES:
     #        latest_signal = metatrader_integration.get_latest_signal(sym, profile)
     #        metatrader_integration.send_order_to_mt5(latest_signal, sym, profile)
 
-    # 3) Run backtesting and save data for graphs
+    # 3)Run backtesting and save data for graphs
     print("\n[STEP 3/4] Running backtests...")
     try:
         backtest_success = backtesting.main()
@@ -69,7 +69,7 @@ def run_cycle():
         print(f"[ERROR] Backtesting failed: {e}")
         cycle_success = False
     
-    # 4) Generate and save graphs (continue even if some data is missing)
+    # 4)Generate and save graphs (continue even if some data is missing)
     print("\n[STEP 4/4] Generating graphs...")
     try:
         print_graphs.main()
@@ -80,7 +80,7 @@ def run_cycle():
     if cycle_success:
         print(f"\n[{datetime.now()}] Cycle completed successfully.")
     else:
-        print(f"\n[{datetime.now()}] Cycle completed with some errors (check logs above).")
+        print(f"\n[{datetime.now()}] Cycle completed with some errors (check logs).")
     
     return cycle_success
 

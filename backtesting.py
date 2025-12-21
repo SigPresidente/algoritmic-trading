@@ -163,7 +163,7 @@ def backtest_symbol(symbol, profile):
     equity_df.to_csv(f"{OUTPUT_DIR}/equity_curve_{symbol.lower().replace('^','')}_{profile}.csv")
     trades_df.to_csv(f"{OUTPUT_DIR}/backtest_trades_{symbol.lower().replace('^','')}_{profile}.csv", index=False)
 
-    print(f"{symbol} — {profile} backtest completed (with Italy 26% tax, capital split across {len(SYMBOLS)} symbols)")
+    print(f"{symbol} — {profile} backtest completed")
     
     #Summary calculations
     if profile == 'pac':
@@ -179,7 +179,7 @@ def backtest_symbol(symbol, profile):
     final_equity = equity_df['equity'].iloc[-1]
     
     #Print summary
-    print(f"\n=== {symbol} {profile.upper()} (After Italy Tax, Split Capital) ===")
+    print(f"\n======= {symbol} {profile.upper()} =======")
     print(f"Initial capital : ${capital_per_symbol:,.2f} (${INITIAL_DEPOSIT:,.2f} / {len(SYMBOLS)} symbols)")
     if profile == 'pac':
         print(f"Total invested  : ${total_invested:,.2f}")

@@ -503,12 +503,10 @@ def main():
             except Exception as e:
                 print(f"[WARNING] Could not create PAC timeline for {sym}: {e}")
 
-    # ============================================================================
-    # PORTFOLIO-LEVEL AGGREGATED GRAPHS
-    # ============================================================================
-    print("\n" + "="*70)
-    print("Generating portfolio-level aggregated graphs...")
-    print("="*70)
+    #Aggregated Graphs (total portfolio)
+    print("\n" + "="*60)
+    print("Generating aggregated graphs...")
+    print("="*60)
     
     colors = {
         'low': '#2E86AB',
@@ -811,9 +809,9 @@ def main():
     except Exception as e:
         print(f"[ERROR] Failed to create portfolio-level graphs: {e}")
 
-    print("\n" + "="*70)
-    print("All graphs completed (individual + portfolio-level aggregation)")
-    print("="*70)
+    print("\n" + "="*60)
+    print("All graphs completed")
+    print("="*60)
 
 if __name__ == "__main__":
     main()

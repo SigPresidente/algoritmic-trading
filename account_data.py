@@ -5,10 +5,10 @@ PROFILES        = ["high", "medium", "low", "pac"]
 SHORT_MA        = [10,  20, 50, None]   # high, medium, low, PAC (N/A)
 LONG_MA         = [50,  100, 120, None]
 RSI_PERIOD      = [9,   14,  14, None]
-RSI_OVERBOUGHT  = [30,  50,  65, None]
-RSI_OVERSOLD    = [70,  50,  35, None]
+RSI_OVERBOUGHT  = [40,  50,  65, None]
+RSI_OVERSOLD    = [60,  50,  35, None]
 STOP_LOSS       = [0.03, 0.025, 0.02]    # 3%, 2.5%, 2% initial stop loss
-TRAIL_PERCENT   = [0.03, 0.02,  0.02]   # 3%, 2%, 2% trailing stop
+TRAIL_PERCENT   = [0.03, 0.02,  0.015]   # 3%, 2%, 1,5% trailing stop
 TAKE_PROFIT     = [0.08, 0.05,  0.03]    # 8%, 5%, 3% take profit (if used)
 
 #Account parameters
