@@ -1,0 +1,76 @@
+graph TD
+    Start([Start Trading Bot]) --> Init[Initialize Configuration<br/>Load account parameters<br/>Set symbols and profiles]
+    Init --> MainLoop{Bot Running?}
+    
+    MainLoop -->|Yes| CycleStart[Start New Cycle]
+    CycleStart --> Step1[Step 1: Import Data]
+    
+    Step1 --> ForEachSym1{For Each Symbol}
+    ForEachSym1 -->|Next Symbol| FetchData[Fetch Historical Data<br/>from Yahoo Finance]
+    FetchData --> CheckCache{CSV File<br/>Up-to-date?}
+    CheckCache -->|Yes| LoadCache[Load from Cache]
+    CheckCache -->|No| DownloadNew[Download New Data<br/>Update CSV]
+    LoadCache --> ForEachSym1
+    DownloadNew --> ForEachSym1
+    ForEachSym1 -->|All Done| Step2[Step 2: Generate Signals]
+    
+    Step2 --> ForEachSym2{For Each Symbol}
+    ForEachSym2 -->|Next Symbol| ForEachProfile{For Each Profile}
+    ForEachProfile -->|Next Profile| CheckPAC{Profile = PAC?}
+    
+    CheckPAC -->|Yes| PACSignal[Generate Monthly<br/>Buy Signal]
+    CheckPAC -->|No| CalcIndicators[Calculate Moving Averages<br/>and RSI]
+    
+    CalcIndicators --> DetectCross[Detect MA Crossovers]
+    DetectCross --> CheckRSI{RSI Filter}
+    CheckRSI -->|Buy Condition| GenerateBuy[Generate Buy Signal]
+    CheckRSI -->|Sell Condition| GenerateSell[Generate Sell Signal]
+    CheckRSI -->|Hold| GenerateHold[Generate Hold Signal]
+    
+    GenerateBuy --> SaveSignals[Save Signals to CSV]
+    GenerateSell --> SaveSignals
+    GenerateHold --> SaveSignals
+    PACSignal --> SaveSignals
+    
+    SaveSignals --> ForEachProfile
+    ForEachProfile -->|All Profiles Done| ForEachSym2
+    ForEachSym2 -->|All Symbols Done| Step3[Step 3: Run Backtesting]
+    
+    Step3 --> ForEachSym3{For Each Symbol}
+    ForEachSym3 -->|Next Symbol| ForEachProfile2{For Each Profile}
+    ForEachProfile2 -->|Next Profile| LoadSignals[Load Signal CSV]
+    LoadSignals --> CheckPAC2{Profile = PAC?}
+    
+    CheckPAC2 -->|Yes| PACBacktest[Execute PAC Strategy<br/>Monthly purchases<br/>Never sell]
+    CheckPAC2 -->|No| TradeBacktest[Execute Trading Strategy<br/>Buy/Sell on signals<br/>Apply Stop Loss/Take Profit]
+    
+    PACBacktest --> ApplyTax[Apply Italy Tax<br/>26% on gains]
+    TradeBacktest --> ApplyTax
+    
+    ApplyTax --> CalcMetrics[Calculate Performance<br/>Equity, P/L, Drawdown]
+    CalcMetrics --> SaveResults[Save Equity Curve<br/>and Trade History]
+    SaveResults --> ForEachProfile2
+    
+    ForEachProfile2 -->|All Profiles Done| ForEachSym3
+    ForEachSym3 -->|All Symbols Done| Step4[Step 4: Generate Graphs]
+    
+    Step4 --> CreateGraphs[Create Performance Charts<br/>- Equity curves<br/>- Returns comparison<br/>- Drawdown analysis<br/>- Risk metrics<br/>- Portfolio aggregation]
+    CreateGraphs --> SaveGraphs[Save PNG files to output]
+    
+    SaveGraphs --> CycleComplete[Cycle Complete]
+    CycleComplete --> Countdown[Wait for Next Cycle<br/>Check interval: 12 hours]
+    
+    Countdown --> InterruptCheck{Ctrl+C<br/>Pressed?}
+    InterruptCheck -->|Yes| Shutdown
+    InterruptCheck -->|No| MainLoop
+    
+    MainLoop -->|No| Shutdown[Shutdown Bot<br/>Print Summary]
+    Shutdown --> End([End])
+    
+    style Start fill:#90EE90
+    style End fill:#FFB6C1
+    style Step1 fill:#87CEEB
+    style Step2 fill:#87CEEB
+    style Step3 fill:#87CEEB
+    style Step4 fill:#87CEEB
+    style Shutdown fill:#FFA07A
