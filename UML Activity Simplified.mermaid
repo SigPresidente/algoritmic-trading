@@ -1,0 +1,27 @@
+---
+config:
+  layout: dagre
+---
+flowchart TB
+    Start(["START"]) --> Init["account_data.py<br>Configuration Data<br>Load Parameters &amp; Symbols"]
+    Init --> MainLoop["main.py<br>Main Loop"]
+    MainLoop --> Step1["import_data.py<br>Import Historical Data (yfinance)<br>Update/Cache CSV Files"]
+    Step1 --> Step2["signals_generation.py<br>Calculate MA &amp; RSI<br>Detect Crossovers<br>Create Buy/Sell Signals"]
+    Step2 --> Step3["backtesting.py<br>Backtest Strategy on Historical Data<br>Elaborate for All Profiles<br>Save Data in CSV Files"]
+    Step3 --> Step4["print_graphs.py<br>Create Performance Charts<br>Save PNG Reports"]
+    Step4 --> Wait["Wait for Next Cycle<br>12-hour interval"]
+    Wait --> MainLoop
+    MainLoop -. Ctrl+C .-> Shutdown["Shutdown & Summary"]
+    Shutdown --> End(["END"])
+    Step2 --> MetaTraderIntegration["metatrader_integration.py<br>Send Signals to MT5<br>Make Operations"]
+
+    style Start fill:#90EE90
+    style MainLoop fill:#FFE4B5
+    style Step1 fill:#87CEEB
+    style Step2 fill:#87CEEB
+    style Step3 fill:#87CEEB
+    style Step4 fill:#87CEEB
+    style Wait fill:#FFE4B5
+    style Shutdown fill:#FFA07A
+    style End fill:#FFB6C1
+    style MetaTraderIntegration fill:#3396FF,stroke:#1a4d8f
