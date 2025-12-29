@@ -147,12 +147,12 @@ def main():
             print(f"[WARNING] No data available for {sym}, skipping graphs")
             continue
 
-        #Define colors for each profile
+        #Define colors for each profile, green orange and red for higher risk, blue for pac
         colors = {
-            'low': '#2E86AB',
-            'medium': '#A23B72', 
-            'high': '#F18F01',
-            'pac': '#06A77D'
+            'low': "#06A71E",
+            'medium': "#F1A501",
+            'high': "#CE1B2C",
+            'pac': '#2E86AB'
         }
         
         profile_labels = {
@@ -470,12 +470,12 @@ def main():
                     ax1.plot(pac_trades['date'].values, cumulative_investment.values, 
                             label='Cumulative Investment', linewidth=2.5, color='#FF6B6B', alpha=0.8)
                     ax1.plot(pac_df.index, pac_df['equity'], 
-                            label='Portfolio Value (After Tax)', linewidth=2.5, color='#06A77D', alpha=0.9)
+                            label='Portfolio Value (After Tax)', linewidth=2.5, color='#2E86AB', alpha=0.9)
                     
                     #Create properly aligned series for fill_between
                     cumulative_for_fill = cumulative_investment.reindex(pac_df.index, method='ffill').fillna(capital_per_symbol)
                     ax1.fill_between(pac_df.index, pac_df['equity'], cumulative_for_fill,
-                                    alpha=0.2, color='#06A77D', label='Net Gain/Loss')
+                                    alpha=0.2, color='#2E86AB', label='Net Gain/Loss')
                     
                     ax1.set_title(f'PAC Strategy - Investment Timeline vs Portfolio Value - {sym}', 
                                  fontsize=15, fontweight='bold')
@@ -488,7 +488,7 @@ def main():
                     ax2.plot(pac_df.index, pac_df['close'], label=f'{sym} Price ($)', 
                             linewidth=2, color='black', alpha=0.7)
                     ax2.scatter(pac_trades['date'].values, pac_trades['price'].values, 
-                               color='#06A77D', s=80, alpha=0.7, zorder=5, label='Monthly Purchases')
+                               color='#2E86AB', s=80, alpha=0.7, zorder=5, label='Monthly Purchases')
                     
                     ax2.set_title(f'Monthly Purchase Points on {sym} Price Chart', fontsize=15, fontweight='bold')
                     ax2.set_xlabel('Date', fontsize=12, fontweight='bold')
@@ -509,11 +509,11 @@ def main():
     print("="*60)
     
     colors = {
-        'low': '#2E86AB',
-        'medium': '#A23B72', 
-        'high': '#F18F01',
-        'pac': '#06A77D'
-    }
+            'low': "#06A71E",
+            'medium': "#F1A501",
+            'high': "#CE1B2C",
+            'pac': '#2E86AB'
+        }
     
     profile_labels = {
         'low': 'Low Risk (P1)',
