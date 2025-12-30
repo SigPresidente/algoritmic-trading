@@ -422,7 +422,7 @@ def main():
             bars2 = ax.bar(x_all, bench_vols, width, label=f'Benchmark ({sym})', 
                           color=COLOR_CONFIG['benchmark'], alpha=0.6)
             bars3 = ax.bar(x_all + width, robo_vols, width, label='Moneyfarm', 
-                          color=COLOR_CONFIG['accent'], alpha=0.8)
+                          color=[COLOR_CONFIG[p] for p in available_profiles], alpha=0.5, hatch='//')
             
             def add_value_labels(bars):
                 for bar in bars:
@@ -438,7 +438,7 @@ def main():
             
             ax.set_xlabel('Risk Profile', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
             ax.set_ylabel('Annualized Volatility (%)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
-            ax.set_title(f'Volatility Comparison - All Profiles - {sym}', 
+            ax.set_title(f'Volatility Comparison - {sym}', 
                         fontsize=FONT_CONFIG['title'], fontweight='bold', pad=20)
             ax.set_xticks(x_all)
             ax.set_xticklabels([PROFILE_LABELS[p] for p in available_profiles], 

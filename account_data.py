@@ -72,7 +72,7 @@ COLOR_CONFIG = {
     'robo_advisor': None, #Same profile color, dashed line
     'positive': '#06A71E',       
     'negative': '#CE1B2C',      
-    'neutral': "#28E0D0", #Benchmark values     
+    'neutral': "#343434FF", #Benchmark values     
     'accent': "#D901F1", #MoneyFarm values
 }
 
