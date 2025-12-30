@@ -147,21 +147,6 @@ def main():
             print(f"[WARNING] No data available for {sym}, skipping graphs")
             continue
 
-        #Define colors for each profile, green orange and red for higher risk, blue for pac
-        colors = {
-            'low': "#06A71E",
-            'medium': "#F1A501",
-            'high': "#CE1B2C",
-            'pac': '#2E86AB'
-        }
-        
-        profile_labels = {
-            'low': 'Low Risk (P1)',
-            'medium': 'Medium Risk (P4)',
-            'high': 'High Risk (P7)',
-            'pac': 'PAC (Monthly Buy)'
-        }
-
         #1) Equity Curves (per symbol)
         try:
             fig, ax = plt.subplots(figsize=(18, 9))
@@ -172,8 +157,8 @@ def main():
                     continue
                 data = all_profiles_data[profile]
                 df = data['df']
-                ax.plot(df.index, df['equity'], label=f'Algorithm - {profile_labels[profile]}', 
-                       linewidth=2.8, color=colors[profile], alpha=0.9)
+                ax.plot(df.index, df['equity'], label=f'Algorithm - {PROFILE_LABELS[profile]}', 
+                       linewidth=2.8, color=COLOR_CONFIG[profile], alpha=0.9)
             
             #Plot robo-advisor for profiles with robo comparison
             for profile in ['low', 'medium', 'high']:
@@ -181,21 +166,22 @@ def main():
                     data = all_profiles_data[profile]
                     df = data['df']
                     if not df['robo_equity'].isna().all():
-                        ax.plot(df.index, df['robo_equity'], label=f'Moneyfarm - {profile_labels[profile]}', 
-                               linewidth=2, color=colors[profile], linestyle='--', alpha=0.6)
+                        ax.plot(df.index, df['robo_equity'], label=f'Moneyfarm - {PROFILE_LABELS[profile]}', 
+                               linewidth=2, color=COLOR_CONFIG[profile], linestyle='--', alpha=0.6)
             
             #Add benchmark (use first available profile's data)
             first_profile = list(all_profiles_data.keys())[0]
             bench_df = all_profiles_data[first_profile]['df']
             capital_per_symbol = INITIAL_DEPOSIT / len(SYMBOLS)
             ax.plot(bench_df.index, bench_df['close'] / bench_df['close'].iloc[0] * capital_per_symbol, 
-                   label=f'Benchmark ({sym})', linewidth=2.5, color='black', linestyle=':', alpha=0.7)
+                   label=f'Benchmark ({sym})', linewidth=2.5, color=COLOR_CONFIG['benchmark'], linestyle=':', alpha=0.7)
             
             ax.set_title(f'Equity Curve Comparison - {sym} only',
-                        fontsize=17, fontweight='bold', pad=20)
-            ax.set_xlabel('Date', fontsize=13, fontweight='bold')
-            ax.set_ylabel('Portfolio Value ($)', fontsize=13, fontweight='bold')
-            ax.legend(fontsize=10, loc='best', ncol=2)
+                        fontsize=FONT_CONFIG['title'], fontweight='bold', pad=20)
+            ax.set_xlabel('Date', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+            ax.set_ylabel('Portfolio Value ($)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+            ax.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
+            ax.legend(fontsize=FONT_CONFIG['legend'], loc='best', ncol=2)
             ax.grid(True, alpha=0.3)
             plt.tight_layout()
             plt.savefig(f"{OUTPUT_DIR}/equity_comparison_all_profiles_{base}.png", dpi=300, bbox_inches='tight')
@@ -214,8 +200,8 @@ def main():
                     continue
                 data = all_profiles_data[profile]
                 df = data['df']
-                ax.plot(df.index, df['algo_returns'], label=f'Algorithm - {profile_labels[profile]}', 
-                       linewidth=2.8, color=colors[profile], alpha=0.9)
+                ax.plot(df.index, df['algo_returns'], label=f'Algorithm - {PROFILE_LABELS[profile]}', 
+                       linewidth=2.8, color=COLOR_CONFIG[profile], alpha=0.9)
             
             #Plot robo returns
             for profile in ['low', 'medium', 'high']:
@@ -223,22 +209,23 @@ def main():
                     data = all_profiles_data[profile]
                     df = data['df']
                     if not df['robo_returns'].isna().all() and df['robo_returns'].iloc[-1] != 0:
-                        ax.plot(df.index, df['robo_returns'], label=f'Moneyfarm - {profile_labels[profile]}', 
-                               linewidth=2, color=colors[profile], linestyle='--', alpha=0.6)
+                        ax.plot(df.index, df['robo_returns'], label=f'Moneyfarm - {PROFILE_LABELS[profile]}', 
+                               linewidth=2, color=COLOR_CONFIG[profile], linestyle='--', alpha=0.6)
             
             #Add benchmark
             first_profile = list(all_profiles_data.keys())[0]
             bench_df = all_profiles_data[first_profile]['df']
             ax.plot(bench_df.index, bench_df['benchmark_returns'], 
-                   label=f'Benchmark ({sym})', linewidth=2.5, color='black', linestyle=':', alpha=0.7)
+                   label=f'Benchmark ({sym})', linewidth=2.5, color=COLOR_CONFIG['benchmark'], linestyle=':', alpha=0.7)
             
             ax.set_title(f'Cumulative Returns - {sym} (After 26% Italy Tax, Split Capital)', 
-                        fontsize=17, fontweight='bold', pad=20)
-            ax.set_xlabel('Date', fontsize=13, fontweight='bold')
-            ax.set_ylabel('Returns (%)', fontsize=13, fontweight='bold')
-            ax.legend(fontsize=10, loc='best', ncol=2)
+                        fontsize=FONT_CONFIG['title'], fontweight='bold', pad=20)
+            ax.set_xlabel('Date', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+            ax.set_ylabel('Returns (%)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+            ax.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
+            ax.legend(fontsize=FONT_CONFIG['legend'], loc='best', ncol=2)
             ax.grid(True, alpha=0.3)
-            ax.axhline(y=0, color='gray', linestyle='-', linewidth=0.8, alpha=0.5)
+            ax.axhline(y=0, color=COLOR_CONFIG['neutral'], linestyle='-', linewidth=0.8, alpha=0.5)
             plt.tight_layout()
             plt.savefig(f"{OUTPUT_DIR}/cumulative_returns_all_profiles_{base}.png", dpi=300, bbox_inches='tight')
             plt.close()
@@ -255,17 +242,18 @@ def main():
                     continue
                 data = all_profiles_data[profile]
                 df = data['df']
-                ax.plot(df.index, df['drawdown'], label=f'{profile_labels[profile]}', 
-                       linewidth=2.5, color=colors[profile], alpha=0.9)
-                ax.fill_between(df.index, df['drawdown'], 0, color=colors[profile], alpha=0.15)
+                ax.plot(df.index, df['drawdown'], label=f'{PROFILE_LABELS[profile]}', 
+                       linewidth=2.5, color=COLOR_CONFIG[profile], alpha=0.9)
+                ax.fill_between(df.index, df['drawdown'], 0, color=COLOR_CONFIG[profile], alpha=0.15)
             
             ax.set_title(f'Drawdown Comparison - {sym} (After Italy Tax)', 
-                        fontsize=17, fontweight='bold', pad=20)
-            ax.set_xlabel('Date', fontsize=13, fontweight='bold')
-            ax.set_ylabel('Drawdown (%)', fontsize=13, fontweight='bold')
-            ax.legend(fontsize=11, loc='best')
+                        fontsize=FONT_CONFIG['title'], fontweight='bold', pad=20)
+            ax.set_xlabel('Date', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+            ax.set_ylabel('Drawdown (%)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+            ax.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
+            ax.legend(fontsize=FONT_CONFIG['legend'], loc='best')
             ax.grid(True, alpha=0.3)
-            ax.axhline(y=0, color='gray', linestyle='-', linewidth=0.8, alpha=0.5)
+            ax.axhline(y=0, color=COLOR_CONFIG['neutral'], linestyle='-', linewidth=0.8, alpha=0.5)
             plt.tight_layout()
             plt.savefig(f"{OUTPUT_DIR}/drawdown_all_profiles_{base}.png", dpi=300, bbox_inches='tight')
             plt.close()
@@ -282,7 +270,7 @@ def main():
                     axes = [axes]  # Make it iterable
                     
                 fig.suptitle(f'Trade P/L Distribution - Trading Profiles - {sym}', 
-                            fontsize=16, fontweight='bold', y=1.02)
+                            fontsize=FONT_CONFIG['suptitle'], fontweight='bold', y=1.02)
                 
                 for idx, profile in enumerate(trading_profiles):
                     data = all_profiles_data[profile]
@@ -291,23 +279,26 @@ def main():
                     if 'pnl' in trades_df.columns and not trades_df.empty:
                         pnl = trades_df[trades_df['pnl'] != 0]['pnl']
                         if not pnl.empty:
-                            axes[idx].hist(pnl, bins=20, color=colors[profile], edgecolor='black', alpha=0.7)
-                            axes[idx].axvline(pnl.mean(), color='red', linestyle='--', linewidth=2, 
+                            axes[idx].hist(pnl, bins=20, color=COLOR_CONFIG[profile], edgecolor='black', alpha=0.7)
+                            axes[idx].axvline(pnl.mean(), color=COLOR_CONFIG['negative'], linestyle='--', linewidth=2, 
                                              label=f'Mean: ${pnl.mean():.2f}')
-                            axes[idx].set_title(profile_labels[profile], fontsize=13, fontweight='bold')
-                            axes[idx].set_xlabel('P/L ($)', fontsize=11)
+                            axes[idx].set_title(PROFILE_LABELS[profile], fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+                            axes[idx].set_xlabel('P/L ($)', fontsize=FONT_CONFIG['axis_label'])
+                            axes[idx].tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
                             if idx == 0:
-                                axes[idx].set_ylabel('Frequency', fontsize=11)
-                            axes[idx].legend(fontsize=9)
+                                axes[idx].set_ylabel('Frequency', fontsize=FONT_CONFIG['axis_label'])
+                            axes[idx].legend(fontsize=FONT_CONFIG['legend'])
                             axes[idx].grid(True, alpha=0.3)
                         else:
                             axes[idx].text(0.5, 0.5, 'No closed trades', 
-                                          transform=axes[idx].transAxes, ha='center', va='center', fontsize=12)
-                            axes[idx].set_title(profile_labels[profile], fontsize=13, fontweight='bold')
+                                          transform=axes[idx].transAxes, ha='center', va='center', 
+                                          fontsize=FONT_CONFIG['annotation'])
+                            axes[idx].set_title(PROFILE_LABELS[profile], fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
                     else:
                         axes[idx].text(0.5, 0.5, 'No trade data', 
-                                      transform=axes[idx].transAxes, ha='center', va='center', fontsize=12)
-                        axes[idx].set_title(profile_labels[profile], fontsize=13, fontweight='bold')
+                                      transform=axes[idx].transAxes, ha='center', va='center', 
+                                      fontsize=FONT_CONFIG['annotation'])
+                        axes[idx].set_title(PROFILE_LABELS[profile], fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
                 
                 plt.tight_layout()
                 plt.savefig(f"{OUTPUT_DIR}/pnl_distribution_all_profiles_{base}.png", dpi=300, bbox_inches='tight')
@@ -320,7 +311,7 @@ def main():
         try:
             fig, axes = plt.subplots(2, 2, figsize=(18, 13))
             fig.suptitle(f'Performance Metrics - {sym} only', 
-                        fontsize=17, fontweight='bold', y=0.995)
+                        fontsize=FONT_CONFIG['suptitle'], fontweight='bold', y=0.995)
             
             #Use only profiles with robo comparison for this chart
             comparison_profiles = [p for p in ['low', 'medium', 'high'] if p in all_profiles_data]
@@ -333,66 +324,78 @@ def main():
                 robo_returns = [all_profiles_data[p]['robo_total_return'] for p in comparison_profiles]
                 
                 bars1 = axes[0, 0].bar(x - width/2, algo_returns, width, label='Algorithm', 
-                                      color=[colors[p] for p in comparison_profiles], alpha=0.8)
+                                      color=[COLOR_CONFIG[p] for p in comparison_profiles], alpha=0.8)
                 bars2 = axes[0, 0].bar(x + width/2, robo_returns, width, label='Moneyfarm', 
-                                      color=[colors[p] for p in comparison_profiles], alpha=0.5, hatch='//')
+                                      color=[COLOR_CONFIG[p] for p in comparison_profiles], alpha=0.5, hatch='//')
                 
                 for bars in [bars1, bars2]:
                     for bar in bars:
                         height = bar.get_height()
                         axes[0, 0].text(bar.get_x() + bar.get_width()/2., height,
                                        f'{height:.1f}%', ha='center', va='bottom' if height >= 0 else 'top', 
-                                       fontsize=9, fontweight='bold')
+                                       fontsize=FONT_CONFIG['bar_label'], fontweight='bold')
                 
-                axes[0, 0].set_title('Total Return (%) - Algorithm vs Moneyfarm', fontsize=13, fontweight='bold')
+                axes[0, 0].set_title('Total Return (%) - Algorithm vs Moneyfarm', 
+                                    fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
                 axes[0, 0].set_xticks(x)
-                axes[0, 0].set_xticklabels([profile_labels[p] for p in comparison_profiles], fontsize=10)
-                axes[0, 0].legend(fontsize=10, loc='upper left')
+                axes[0, 0].set_xticklabels([PROFILE_LABELS[p] for p in comparison_profiles], 
+                                          fontsize=FONT_CONFIG['tick_label'])
+                axes[0, 0].tick_params(axis='y', labelsize=FONT_CONFIG['tick_label'])
+                axes[0, 0].legend(fontsize=FONT_CONFIG['legend'], loc='upper left')
                 axes[0, 0].grid(True, alpha=0.3, axis='y')
-                axes[0, 0].axhline(y=0, color='gray', linestyle='-', linewidth=0.8)
+                axes[0, 0].axhline(y=0, color=COLOR_CONFIG['neutral'], linestyle='-', linewidth=0.8)
             
             #Metric 2: Sharpe Ratio (all profiles including PAC)
             available_profiles = list(all_profiles_data.keys())
             sharpes = [all_profiles_data[p]['metrics']['Sharpe Ratio'] for p in available_profiles]
             x_all = np.arange(len(available_profiles))
-            bars = axes[0, 1].bar(x_all, sharpes, width*1.5, color=[colors[p] for p in available_profiles], alpha=0.8)
+            bars = axes[0, 1].bar(x_all, sharpes, width*1.5, color=[COLOR_CONFIG[p] for p in available_profiles], alpha=0.8)
             for bar in bars:
                 height = bar.get_height()
                 axes[0, 1].text(bar.get_x() + bar.get_width()/2., height,
                                f'{height:.2f}', ha='center', va='bottom' if height >= 0 else 'top', 
-                               fontsize=10, fontweight='bold')
-            axes[0, 1].set_title('Sharpe Ratio (%/%) - All Profiles', fontsize=13, fontweight='bold')
+                               fontsize=FONT_CONFIG['bar_label'], fontweight='bold')
+            axes[0, 1].set_title('Sharpe Ratio (%/%) - All Profiles', 
+                                fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
             axes[0, 1].set_xticks(x_all)
-            axes[0, 1].set_xticklabels([profile_labels[p] for p in available_profiles], fontsize=10)
+            axes[0, 1].set_xticklabels([PROFILE_LABELS[p] for p in available_profiles], 
+                                      fontsize=FONT_CONFIG['tick_label'])
+            axes[0, 1].tick_params(axis='y', labelsize=FONT_CONFIG['tick_label'])
             axes[0, 1].grid(True, alpha=0.3, axis='y')
-            axes[0, 1].axhline(y=0, color='gray', linestyle='-', linewidth=0.8)
+            axes[0, 1].axhline(y=0, color=COLOR_CONFIG['neutral'], linestyle='-', linewidth=0.8)
             
             #Metric 3: Max Drawdown (all profiles)
             drawdowns = [all_profiles_data[p]['metrics']['Max Drawdown (%)'] for p in available_profiles]
-            bars = axes[1, 0].bar(x_all, drawdowns, width*1.5, color=[colors[p] for p in available_profiles], alpha=0.8)
+            bars = axes[1, 0].bar(x_all, drawdowns, width*1.5, color=[COLOR_CONFIG[p] for p in available_profiles], alpha=0.8)
             for bar in bars:
                 height = bar.get_height()
                 axes[1, 0].text(bar.get_x() + bar.get_width()/2., height,
                                f'{height:.1f}%', ha='center', va='top', 
-                               fontsize=10, fontweight='bold')
-            axes[1, 0].set_title('Max Drawdown (%) - All Profiles', fontsize=13, fontweight='bold')
+                               fontsize=FONT_CONFIG['bar_label'], fontweight='bold')
+            axes[1, 0].set_title('Max Drawdown (%) - All Profiles', 
+                                fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
             axes[1, 0].set_xticks(x_all)
-            axes[1, 0].set_xticklabels([profile_labels[p] for p in available_profiles], fontsize=10)
+            axes[1, 0].set_xticklabels([PROFILE_LABELS[p] for p in available_profiles], 
+                                      fontsize=FONT_CONFIG['tick_label'])
+            axes[1, 0].tick_params(axis='y', labelsize=FONT_CONFIG['tick_label'])
             axes[1, 0].grid(True, alpha=0.3, axis='y')
             
             #Metric 4: Total Return Comparison (All Profiles)
             all_returns = [all_profiles_data[p]['metrics']['Total Return (%)'] for p in available_profiles]
-            bars = axes[1, 1].bar(x_all, all_returns, width*1.5, color=[colors[p] for p in available_profiles], alpha=0.8)
+            bars = axes[1, 1].bar(x_all, all_returns, width*1.5, color=[COLOR_CONFIG[p] for p in available_profiles], alpha=0.8)
             for bar in bars:
                 height = bar.get_height()
                 axes[1, 1].text(bar.get_x() + bar.get_width()/2., height,
                                f'{height:.1f}%', ha='center', va='bottom' if height >= 0 else 'top', 
-                               fontsize=10, fontweight='bold')
-            axes[1, 1].set_title('Total Return (%) - All Profiles', fontsize=13, fontweight='bold')
+                               fontsize=FONT_CONFIG['bar_label'], fontweight='bold')
+            axes[1, 1].set_title('Total Return (%) - All Profiles', 
+                                fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
             axes[1, 1].set_xticks(x_all)
-            axes[1, 1].set_xticklabels([profile_labels[p] for p in available_profiles], fontsize=10)
+            axes[1, 1].set_xticklabels([PROFILE_LABELS[p] for p in available_profiles], 
+                                      fontsize=FONT_CONFIG['tick_label'])
+            axes[1, 1].tick_params(axis='y', labelsize=FONT_CONFIG['tick_label'])
             axes[1, 1].grid(True, alpha=0.3, axis='y')
-            axes[1, 1].axhline(y=0, color='gray', linestyle='-', linewidth=0.8)
+            axes[1, 1].axhline(y=0, color=COLOR_CONFIG['neutral'], linestyle='-', linewidth=0.8)
             
             plt.tight_layout()
             plt.savefig(f"{OUTPUT_DIR}/performance_metrics_all_profiles_{base}.png", dpi=300, bbox_inches='tight')
@@ -413,34 +416,36 @@ def main():
             x_all = np.arange(len(available_profiles))
             width = 0.25
             
-            bars1 = ax.bar(x_all - width, algo_vols, width, label='Algorithm', color='#2E86AB', alpha=0.8)
-            bars2 = ax.bar(x_all, bench_vols, width, label=f'Benchmark ({sym})', color='#A23B72', alpha=0.8)
-            bars3 = ax.bar(x_all + width, robo_vols, width, label='Moneyfarm', color='#F18F01', alpha=0.8)
+            # Use profile colors for algorithm, keep distinct colors for benchmark and robo
+            bars1 = ax.bar(x_all - width, algo_vols, width, label='Algorithm', 
+                          color=[COLOR_CONFIG[p] for p in available_profiles], alpha=0.8)
+            bars2 = ax.bar(x_all, bench_vols, width, label=f'Benchmark ({sym})', 
+                          color=COLOR_CONFIG['benchmark'], alpha=0.6)
+            bars3 = ax.bar(x_all + width, robo_vols, width, label='Moneyfarm', 
+                          color=COLOR_CONFIG['accent'], alpha=0.8)
             
             def add_value_labels(bars):
                 for bar in bars:
                     height = bar.get_height()
                     if height > 0:
                         ax.text(bar.get_x() + bar.get_width()/2., height,
-                               f'{height:.1f}%', ha='center', va='bottom', fontsize=9, fontweight='bold')
+                               f'{height:.1f}%', ha='center', va='bottom', 
+                               fontsize=FONT_CONFIG['bar_label'], fontweight='bold')
             
             add_value_labels(bars1)
             add_value_labels(bars2)
             add_value_labels(bars3)
             
-            ax.set_xlabel('Risk Profile', fontsize=13, fontweight='bold')
-            ax.set_ylabel('Annualized Volatility (%)', fontsize=13, fontweight='bold')
+            ax.set_xlabel('Risk Profile', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+            ax.set_ylabel('Annualized Volatility (%)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
             ax.set_title(f'Volatility Comparison - All Profiles - {sym}', 
-                        fontsize=16, fontweight='bold', pad=20)
+                        fontsize=FONT_CONFIG['title'], fontweight='bold', pad=20)
             ax.set_xticks(x_all)
-            ax.set_xticklabels([profile_labels[p] for p in available_profiles], fontsize=11)
-            ax.legend(fontsize=11, loc='upper left')
+            ax.set_xticklabels([PROFILE_LABELS[p] for p in available_profiles], 
+                              fontsize=FONT_CONFIG['tick_label'])
+            ax.tick_params(axis='y', labelsize=FONT_CONFIG['tick_label'])
+            ax.legend(fontsize=FONT_CONFIG['legend'], loc='upper right')
             ax.grid(True, alpha=0.3, axis='y')
-            
-            ax.text(0.98, 0.02, 'Note: Moneyfarm volatilities are estimates. PAC robo value is 0 (not applicable).',
-                   transform=ax.transAxes, fontsize=8, style='italic',
-                   verticalalignment='bottom', horizontalalignment='right',
-                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
             
             plt.tight_layout()
             plt.savefig(f"{OUTPUT_DIR}/volatility_comparison_all_profiles_{base}.png", dpi=300, bbox_inches='tight')
@@ -468,32 +473,35 @@ def main():
                     cumulative_investment.index = pac_trades['date'].values
                     
                     ax1.plot(pac_trades['date'].values, cumulative_investment.values, 
-                            label='Cumulative Investment', linewidth=2.5, color='#FF6B6B', alpha=0.8)
+                            label='Cumulative Investment', linewidth=2.5, color=COLOR_CONFIG['negative'], alpha=0.8)
                     ax1.plot(pac_df.index, pac_df['equity'], 
-                            label='Portfolio Value (After Tax)', linewidth=2.5, color='#2E86AB', alpha=0.9)
+                            label='Portfolio Value (After Tax)', linewidth=2.5, color=COLOR_CONFIG['pac'], alpha=0.9)
                     
                     #Create properly aligned series for fill_between
                     cumulative_for_fill = cumulative_investment.reindex(pac_df.index, method='ffill').fillna(capital_per_symbol)
                     ax1.fill_between(pac_df.index, pac_df['equity'], cumulative_for_fill,
-                                    alpha=0.2, color='#2E86AB', label='Net Gain/Loss')
+                                    alpha=0.2, color=COLOR_CONFIG['pac'], label='Net Gain/Loss')
                     
                     ax1.set_title(f'PAC Strategy - Investment Timeline vs Portfolio Value - {sym}', 
-                                 fontsize=15, fontweight='bold')
-                    ax1.set_xlabel('Date', fontsize=12, fontweight='bold')
-                    ax1.set_ylabel('Value ($)', fontsize=12, fontweight='bold')
-                    ax1.legend(fontsize=11)
+                                 fontsize=FONT_CONFIG['title'], fontweight='bold')
+                    ax1.set_xlabel('Date', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+                    ax1.set_ylabel('Value ($)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+                    ax1.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
+                    ax1.legend(fontsize=FONT_CONFIG['legend'])
                     ax1.grid(True, alpha=0.3)
                     
                     #Bottom: Monthly investment markers on price chart
                     ax2.plot(pac_df.index, pac_df['close'], label=f'{sym} Price ($)', 
-                            linewidth=2, color='black', alpha=0.7)
+                            linewidth=2, color=COLOR_CONFIG['benchmark'], alpha=0.7)
                     ax2.scatter(pac_trades['date'].values, pac_trades['price'].values, 
-                               color='#2E86AB', s=80, alpha=0.7, zorder=5, label='Monthly Purchases')
+                               color=COLOR_CONFIG['pac'], s=80, alpha=0.7, zorder=5, label='Monthly Purchases')
                     
-                    ax2.set_title(f'Monthly Purchase Points on {sym} Price Chart', fontsize=15, fontweight='bold')
-                    ax2.set_xlabel('Date', fontsize=12, fontweight='bold')
-                    ax2.set_ylabel(f'{sym} Price', fontsize=12, fontweight='bold')
-                    ax2.legend(fontsize=11)
+                    ax2.set_title(f'Monthly Purchase Points on {sym} Price Chart', 
+                                 fontsize=FONT_CONFIG['title'], fontweight='bold')
+                    ax2.set_xlabel('Date', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+                    ax2.set_ylabel(f'{sym} Price', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+                    ax2.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
+                    ax2.legend(fontsize=FONT_CONFIG['legend'])
                     ax2.grid(True, alpha=0.3)
                     
                     plt.tight_layout()
@@ -507,20 +515,6 @@ def main():
     print("\n" + "="*60)
     print("Generating aggregated graphs...")
     print("="*60)
-    
-    colors = {
-            'low': "#06A71E",
-            'medium': "#F1A501",
-            'high': "#CE1B2C",
-            'pac': '#2E86AB'
-        }
-    
-    profile_labels = {
-        'low': 'Low Risk (P1)',
-        'medium': 'Medium Risk (P4)',
-        'high': 'High Risk (P7)',
-        'pac': 'PAC (Monthly Buy)'
-    }
     
     #Sum equity curves across all symbols for each profile
     try:
@@ -582,31 +576,32 @@ def main():
                 continue
             data = aggregated_portfolios[profile]
             ax.plot(data['equity'].index, data['returns'], 
-                   label=f'Algorithm - {profile_labels[profile]}', 
-                   linewidth=3, color=colors[profile], alpha=0.9)
+                   label=f'Algorithm - {PROFILE_LABELS[profile]}', 
+                   linewidth=3, color=COLOR_CONFIG[profile], alpha=0.9)
         
         #Add Moneyfarm comparison
         for profile in ['low', 'medium', 'high']:
             if profile in aggregated_portfolios and 'robo_returns' in aggregated_portfolios[profile]:
                 data = aggregated_portfolios[profile]
                 ax.plot(data['equity'].index, data['robo_returns'], 
-                       label=f'Moneyfarm - {profile_labels[profile]}', 
-                       linewidth=2.5, color=colors[profile], linestyle='--', alpha=0.6)
+                       label=f'Moneyfarm - {PROFILE_LABELS[profile]}', 
+                       linewidth=2.5, color=COLOR_CONFIG[profile], linestyle='--', alpha=0.6)
         
         ax.set_title('Total Portfolio Cumulative Returns - All Profiles (Linear Scale)\nAggregated across all symbols', 
-                    fontsize=18, fontweight='bold', pad=20)
-        ax.set_xlabel('Date', fontsize=14, fontweight='bold')
-        ax.set_ylabel('Returns (%)', fontsize=14, fontweight='bold')
-        ax.legend(fontsize=12, loc='best', ncol=2)
+                    fontsize=FONT_CONFIG['suptitle'], fontweight='bold', pad=20)
+        ax.set_xlabel('Date', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+        ax.set_ylabel('Returns (%)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+        ax.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
+        ax.legend(fontsize=FONT_CONFIG['legend'], loc='best', ncol=2)
         ax.grid(True, alpha=0.3)
-        ax.axhline(y=0, color='gray', linestyle='-', linewidth=1, alpha=0.5)
+        ax.axhline(y=0, color=COLOR_CONFIG['neutral'], linestyle='-', linewidth=1, alpha=0.5)
         
         #Add annotation for high risk if it's significantly different
         if 'high' in aggregated_portfolios:
             high_return = aggregated_portfolios['high']['returns'].iloc[-1]
             ax.text(0.02, 0.98, f"High Risk Final Return: {high_return:+.1f}%", 
-                   transform=ax.transAxes, fontsize=11, fontweight='bold',
-                   verticalalignment='top', bbox=dict(boxstyle='round', facecolor='#F18F01', alpha=0.3))
+                   transform=ax.transAxes, fontsize=FONT_CONFIG['annotation'], fontweight='bold',
+                   verticalalignment='top', bbox=dict(boxstyle='round', facecolor=COLOR_CONFIG['accent'], alpha=0.3))
         
         plt.tight_layout()
         plt.savefig(f"{OUTPUT_DIR}/portfolio_cumulative_returns_linear.png", dpi=300, bbox_inches='tight')
@@ -623,8 +618,8 @@ def main():
             #Convert to equity ratio for log scale (avoid log of negative numbers)
             equity_ratio = data['equity'] / INITIAL_DEPOSIT
             ax.plot(data['equity'].index, equity_ratio, 
-                   label=f'Algorithm - {profile_labels[profile]}', 
-                   linewidth=3, color=colors[profile], alpha=0.9)
+                   label=f'Algorithm - {PROFILE_LABELS[profile]}', 
+                   linewidth=3, color=COLOR_CONFIG[profile], alpha=0.9)
         
         #Add Moneyfarm comparison
         for profile in ['low', 'medium', 'high']:
@@ -632,17 +627,18 @@ def main():
                 data = aggregated_portfolios[profile]
                 robo_ratio = data['robo_equity'] / INITIAL_DEPOSIT
                 ax.plot(data['equity'].index, robo_ratio, 
-                       label=f'Moneyfarm - {profile_labels[profile]}', 
-                       linewidth=2.5, color=colors[profile], linestyle='--', alpha=0.6)
+                       label=f'Moneyfarm - {PROFILE_LABELS[profile]}', 
+                       linewidth=2.5, color=COLOR_CONFIG[profile], linestyle='--', alpha=0.6)
         
         ax.set_yscale('log')
         ax.set_title('Total Portfolio Growth - All Symbols (Logarithmic Scale)', 
-                    fontsize=18, fontweight='bold', pad=20)
-        ax.set_xlabel('Date', fontsize=14, fontweight='bold')
-        ax.set_ylabel('Portfolio Value Multiplier (Log Scale)', fontsize=14, fontweight='bold')
-        ax.legend(fontsize=12, loc='best', ncol=2)
+                    fontsize=FONT_CONFIG['suptitle'], fontweight='bold', pad=20)
+        ax.set_xlabel('Date', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+        ax.set_ylabel('Portfolio Value Multiplier (Log Scale)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+        ax.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
+        ax.legend(fontsize=FONT_CONFIG['legend'], loc='best', ncol=2)
         ax.grid(True, alpha=0.3, which='both')
-        ax.axhline(y=1, color='gray', linestyle='-', linewidth=1, alpha=0.5, label='Break-even')
+        ax.axhline(y=1, color=COLOR_CONFIG['neutral'], linestyle='-', linewidth=1, alpha=0.5, label='Break-even')
         
         plt.tight_layout()
         plt.savefig(f"{OUTPUT_DIR}/portfolio_cumulative_returns_log.png", dpi=300, bbox_inches='tight')
@@ -657,24 +653,26 @@ def main():
                 continue
             data = aggregated_portfolios[profile]
             ax.plot(data['equity'].index, data['equity'], 
-                   label=f'Algorithm - {profile_labels[profile]}', 
-                   linewidth=3, color=colors[profile], alpha=0.9)
+                   label=f'Algorithm - {PROFILE_LABELS[profile]}', 
+                   linewidth=3, color=COLOR_CONFIG[profile], alpha=0.9)
         
         #Add Moneyfarm comparison
         for profile in ['low', 'medium', 'high']:
             if profile in aggregated_portfolios and 'robo_equity' in aggregated_portfolios[profile]:
                 data = aggregated_portfolios[profile]
                 ax.plot(data['equity'].index, data['robo_equity'], 
-                       label=f'Moneyfarm - {profile_labels[profile]}', 
-                       linewidth=2.5, color=colors[profile], linestyle='--', alpha=0.6)
+                       label=f'Moneyfarm - {PROFILE_LABELS[profile]}', 
+                       linewidth=2.5, color=COLOR_CONFIG[profile], linestyle='--', alpha=0.6)
         
-        ax.axhline(y=INITIAL_DEPOSIT, color='gray', linestyle=':', linewidth=1.5, alpha=0.7, label='Initial Capital')
+        ax.axhline(y=INITIAL_DEPOSIT, color=COLOR_CONFIG['neutral'], linestyle=':', 
+                  linewidth=1.5, alpha=0.7, label='Initial Capital')
         
         ax.set_title('Total Portfolio Equity Curves - All Profiles\nAggregated across all symbols', 
-                    fontsize=18, fontweight='bold', pad=20)
-        ax.set_xlabel('Date', fontsize=14, fontweight='bold')
-        ax.set_ylabel('Portfolio Value ($)', fontsize=14, fontweight='bold')
-        ax.legend(fontsize=12, loc='best', ncol=2)
+                    fontsize=FONT_CONFIG['suptitle'], fontweight='bold', pad=20)
+        ax.set_xlabel('Date', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+        ax.set_ylabel('Portfolio Value ($)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+        ax.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
+        ax.legend(fontsize=FONT_CONFIG['legend'], loc='best', ncol=2)
         ax.grid(True, alpha=0.3)
         
         #Add final values as text
@@ -684,9 +682,9 @@ def main():
                 final_val = aggregated_portfolios[profile]['equity'].iloc[-1]
                 final_ret = aggregated_portfolios[profile]['returns'].iloc[-1]
                 ax.text(0.02, text_y_pos, 
-                       f"{profile_labels[profile]}: ${final_val:,.0f} ({final_ret:+.1f}%)", 
-                       transform=ax.transAxes, fontsize=10, fontweight='bold',
-                       verticalalignment='top', color=colors[profile],
+                       f"{PROFILE_LABELS[profile]}: ${final_val:,.0f} ({final_ret:+.1f}%)", 
+                       transform=ax.transAxes, fontsize=FONT_CONFIG['annotation'], fontweight='bold',
+                       verticalalignment='top', color=COLOR_CONFIG[profile],
                        bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
                 text_y_pos -= 0.05
         
@@ -708,23 +706,24 @@ def main():
             total_return = data['returns'].iloc[-1]
             volatility = annualized_vol(returns_series)
             
-            ax.scatter(volatility, total_return, s=500, color=colors[profile], 
+            ax.scatter(volatility, total_return, s=500, color=COLOR_CONFIG[profile], 
                       alpha=0.7, edgecolors='black', linewidths=2, 
-                      label=profile_labels[profile])
+                      label=PROFILE_LABELS[profile])
             
             #Add profile labels next to points
-            ax.annotate(profile_labels[profile], 
+            ax.annotate(PROFILE_LABELS[profile], 
                        xy=(volatility, total_return),
                        xytext=(10, 10), textcoords='offset points',
-                       fontsize=11, fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.5', facecolor=colors[profile], alpha=0.3))
+                       fontsize=FONT_CONFIG['annotation'], fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.5', facecolor=COLOR_CONFIG[profile], alpha=0.3))
         
         ax.set_title('Risk-Adjusted Performance - Total Portfolio\nReturn vs Volatility across all profiles', 
-                    fontsize=18, fontweight='bold', pad=20)
-        ax.set_xlabel('Annualized Volatility (%)', fontsize=14, fontweight='bold')
-        ax.set_ylabel('Total Return (%)', fontsize=14, fontweight='bold')
+                    fontsize=FONT_CONFIG['suptitle'], fontweight='bold', pad=20)
+        ax.set_xlabel('Annualized Volatility (%)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+        ax.set_ylabel('Total Return (%)', fontsize=FONT_CONFIG['axis_label'], fontweight='bold')
+        ax.tick_params(axis='both', labelsize=FONT_CONFIG['tick_label'])
         ax.grid(True, alpha=0.3)
-        ax.axhline(y=0, color='gray', linestyle='-', linewidth=1, alpha=0.5)
+        ax.axhline(y=0, color=COLOR_CONFIG['neutral'], linestyle='-', linewidth=1, alpha=0.5)
         
         #Add diagonal lines for Sharpe ratio reference
         max_vol = max([annualized_vol(aggregated_portfolios[p]['equity'].pct_change().dropna()) 
@@ -734,7 +733,7 @@ def main():
             y_line = sharpe * x_line
             ax.plot(x_line, y_line, 'k--', alpha=0.2, linewidth=1)
             ax.text(max_vol * 1.15, sharpe * max_vol * 1.15, 
-                   f'Sharpe={sharpe}', fontsize=9, alpha=0.5)
+                   f'Sharpe={sharpe}', fontsize=FONT_CONFIG['annotation'], alpha=0.5)
         
         plt.tight_layout()
         plt.savefig(f"{OUTPUT_DIR}/portfolio_risk_return_scatter.png", dpi=300, bbox_inches='tight')
@@ -761,7 +760,7 @@ def main():
             max_dd = drawdown.min()
             
             summary_data.append({
-                'Profile': profile_labels[profile],
+                'Profile': PROFILE_LABELS[profile],
                 'Final Value ($)': f"${final_equity:,.2f}",
                 'Total Return (%)': f"{total_return:+.2f}%",
                 'Volatility (%)': f"{volatility:.2f}%",
@@ -783,24 +782,25 @@ def main():
                         colWidths=[0.2, 0.15, 0.15, 0.15, 0.15, 0.2])
         
         table.auto_set_font_size(False)
-        table.set_fontsize(11)
+        table.set_fontsize(FONT_CONFIG['table_text'])
         table.scale(1, 2.5)
         
         #Style header
         for i in range(len(summary_df.columns)):
-            table[(0, i)].set_facecolor('#2E86AB')
-            table[(0, i)].set_text_props(weight='bold', color='white')
+            table[(0, i)].set_facecolor(COLOR_CONFIG['pac'])
+            table[(0, i)].set_text_props(weight='bold', color='white', fontsize=FONT_CONFIG['table_header'])
         
         #Color rows by profile
         for i, profile in enumerate(PROFILES):
-            if profile in [p.lower().replace(' (monthly buy)', '').replace(' risk (p1)', '').replace(' risk (p4)', '').replace(' risk (p7)', '') for p in summary_df['Profile']]:
+            if profile in [p.lower().replace(' (monthly buy)', '').replace(' risk (p1)', '').replace(' risk (p4)', '').replace(' risk (p7)', '') 
+                          for p in summary_df['Profile']]:
                 for j in range(len(summary_df.columns)):
                     if i < len(summary_df):
-                        table[(i+1, j)].set_facecolor(colors[profile])
+                        table[(i+1, j)].set_facecolor(COLOR_CONFIG[profile])
                         table[(i+1, j)].set_alpha(0.3)
         
         plt.title('Total Portfolio Performance Summary', 
-                 fontsize=16, fontweight='bold', pad=20)
+                 fontsize=FONT_CONFIG['title'], fontweight='bold', pad=20)
         plt.tight_layout()
         plt.savefig(f"{OUTPUT_DIR}/portfolio_performance_table.png", dpi=300, bbox_inches='tight')
         plt.close()

@@ -41,3 +41,45 @@ ROBO_COMMISSION = 0.0128 #1.28% annual total commission
 ROBO_LOW_RISK   = 0.023 #Total returns from 01-01-2018, From MoneyFarm website (low)
 ROBO_MEDIUM_RISK = 0.463 #Total returns from 01-01-2018, From MoneyFarm website (medium)    
 ROBO_HIGH_RISK  = 1.189 #Total returns from 01-01-2018, From MoneyFarm website (high)
+
+#Graphics Config
+FONT_CONFIG = {
+    # Main elements
+    'title': 19,           # Graph titles
+    'suptitle': 19,        # Figure super titles
+    'axis_label': 15,      # X and Y axis labels
+    
+    # Secondary elements  
+    'tick_label': 13,      # Axis tick numbers
+    'legend': 13,          # Legend text
+    'annotation': 12,      # Annotations and notes
+    
+    # Data labels
+    'bar_label': 11,       # Numbers on bar charts
+    'table_text': 13,      # Table cells
+    'table_header': 14,    # Table headers
+}
+
+COLOR_CONFIG = {
+    #Profile colors
+    'high': '#CE1B2C',     
+    'medium': '#F1A501',
+    'low': '#06A71E',
+    'pac': '#2E86AB',
+
+    #Additional graph elements
+    'benchmark': '#000000',
+    'robo_advisor': None, #Same profile color, dashed line
+    'positive': '#06A71E',       
+    'negative': '#CE1B2C',      
+    'neutral': "#28E0D0", #Benchmark values     
+    'accent': "#D901F1", #MoneyFarm values
+}
+
+#Profile labels for graphs
+PROFILE_LABELS = {
+    'high': 'High Risk (P7)',
+    'medium': 'Medium Risk (P4)',
+    'low': 'Low Risk (P1)',
+    'pac': 'PAC (Monthly Buy)'
+}
