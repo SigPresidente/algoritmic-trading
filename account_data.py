@@ -45,19 +45,19 @@ ROBO_HIGH_RISK  = 1.189 #Total returns from 01-01-2018, From MoneyFarm website (
 #Graphics Config
 FONT_CONFIG = {
     # Main elements
-    'title': 19,           # Graph titles
-    'suptitle': 19,        # Figure super titles
-    'axis_label': 15,      # X and Y axis labels
+    'title': 30,           # Graph titles
+    'suptitle': 30,        # Figure super titles
+    'axis_label': 20,      # X and Y axis labels
     
     # Secondary elements  
-    'tick_label': 13,      # Axis tick numbers
-    'legend': 13,          # Legend text
-    'annotation': 12,      # Annotations and notes
+    'tick_label': 18,      # Axis tick numbers
+    'legend': 18,          # Legend text
+    'annotation': 15,      # Annotations and notes
     
     # Data labels
-    'bar_label': 11,       # Numbers on bar charts
-    'table_text': 13,      # Table cells
-    'table_header': 14,    # Table headers
+    'bar_label': 15,       # Numbers on bar charts
+    'table_text': 15,      # Table cells
+    'table_header': 15,    # Table headers
 }
 
 COLOR_CONFIG = {
