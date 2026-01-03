@@ -11,9 +11,9 @@ from account_data import *
 #Config
 #Total returns from Moneyfarm website from 2018-01-01
 robo_total_returns = {
-    "low": ROBO_LOW_RISK,       # Portfolio 1: 2.3% total from 2018
-    "medium": ROBO_MEDIUM_RISK, # Portfolio 4: 46.3% total from 2018  
-    "high": ROBO_HIGH_RISK      # Portfolio 7: 118.9% total from 2018
+    "low": ROBO_LOW_RISK,       # Portfolio 1: 1,8% net total from 2018
+    "medium": ROBO_MEDIUM_RISK, # Portfolio 4: 34,9% net total from 2018  
+    "high": ROBO_HIGH_RISK      # Portfolio 7: 88,8% net total from 2018
 }
 
 #Moneyfarm volatility estimates from website
@@ -65,16 +65,16 @@ def main():
             if profile in robo_total_returns:
                 robo_total_return_from_2018 = robo_total_returns[profile]
                 
-                #Calculate equivalent daily return rate based on actual time period
+                #Calculate daily return rate from START_DATE (2018-01-01) to end of data
                 start_date = pd.Timestamp(START_DATE)
-                days_since_start = (df.index[-1] - start_date).days
+                end_date = df.index[-1]
+                total_days_from_2018 = (end_date - start_date).days
                 
-                if days_since_start > 0:
-                    #Calculate gross daily return
-                    daily_return_rate = (1 + robo_total_return_from_2018) ** (1 / days_since_start) - 1
+                if total_days_from_2018 > 0:
+                    #Calculate gross daily return from total return over full period
+                    daily_return_rate = (1 + robo_total_return_from_2018) ** (1 / total_days_from_2018) - 1
                     
-                    #Apply annual commission (1.28% per year)
-                    #Convert to daily commission deduction
+                    #Apply annual commission (1.28% per year) as daily deduction
                     annual_commission_factor = (1 - ROBO_COMMISSION)
                     daily_commission_factor = annual_commission_factor ** (1 / 365)
                     
@@ -83,10 +83,10 @@ def main():
                 else:
                     net_daily_return = 0
                 
-                #Build robo equity curve from the start of the backtest data (with split capital)
-                days_in_backtest = len(df)
-                df['robo_equity'] = capital_per_symbol * (1 + net_daily_return) ** np.arange(days_in_backtest)
-                robo_total_return = (df['robo_equity'].iloc[-1] / capital_per_symbol - 1) * 100
+                #Build robo equity curve: calculate days from 2018-01-01 for each date in backtest
+                days_from_2018 = (df.index - start_date).days.values
+                df['robo_equity'] = capital_per_symbol * (1 + net_daily_return) ** days_from_2018
+                robo_total_return = robo_total_return_from_2018 * 100  # Use actual total return from config
                 df['robo_returns'] = (df['robo_equity'] / df['robo_equity'].iloc[0] - 1) * 100
             else:
                 df['robo_equity'] = np.nan

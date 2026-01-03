@@ -38,9 +38,9 @@ START_DATE      = "2018-01-01"
 
 #Robo Advisor Config (cost and returns based on risk profiles)
 ROBO_COMMISSION = 0.0128 #1.28% annual total commission
-ROBO_LOW_RISK   = 0.023 #Total returns from 01-01-2018, From MoneyFarm website (low)
-ROBO_MEDIUM_RISK = 0.463 #Total returns from 01-01-2018, From MoneyFarm website (medium)    
-ROBO_HIGH_RISK  = 1.189 #Total returns from 01-01-2018, From MoneyFarm website (high)
+ROBO_LOW_RISK   = 0.018 #1,8% net returns from 01-01-2018, From MoneyFarm website (low)
+ROBO_MEDIUM_RISK = 0.349 #34,9% net returns from 01-01-2018, From MoneyFarm website (medium)    
+ROBO_HIGH_RISK  = 0.888 #88,8% net returns from 01-01-2018, From MoneyFarm website (high)
 
 #Graphics Config
 FONT_CONFIG = {
